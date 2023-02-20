@@ -58,7 +58,7 @@ namespace TestMod
 			if (self.owner is Crate)
 			{
 				Debug.Log("Loading Crate BodyChunk ctor!");
-				rect = new Rect(new Vector2(-rad, rad), new Vector2(rad, rad));
+				rect = new Rect(new Vector2(-rad, rad), new Vector2(rad * 2, rad * 2));
 				rotationInDegrees = 45f;
 				pivot = new Vector2(rect.center.x, rect.center.y);
 			}
@@ -67,13 +67,19 @@ namespace TestMod
 		private void BodyChunk_Update(On.BodyChunk.orig_Update orig, BodyChunk self)
 		{
 			orig(self);
+			if (self.owner is Crate)
+            {
+				rect.center = self.pos;
+				Debug.Log("Rect Pos: " + rect.center);
+				Debug.Log("Circle Pos: " + self.pos);
+            }
 		}
 
 		private void BodyChunk_CheckHorizontalCollision(On.BodyChunk.orig_CheckHorizontalCollision orig, BodyChunk self)
 		{
 			if (self.owner is Crate)
 			{
-				Debug.Log("Running Crate Collision");
+				Debug.Log("Running Crate Collision (Horizontal)");
 				self.contactPoint.x = 0;
 
 				// Used to know how far per pixel to Lerp from one Vector2 to the next when calculating number of points for collision detection.
@@ -107,6 +113,10 @@ namespace TestMod
 						// Calculate the surface normal using the cross product of the collision vector and "up" direction
 						collisionNormal = Vector3.Cross(collisionVector, Vector3.up).normalized;
 
+						rect = HandleCollisionResponse(rect, collisionNormal, 0, self);
+						self.pos = rect.center;
+
+
 						break;
 					}
 				}
@@ -123,6 +133,10 @@ namespace TestMod
 						// Calculate the surface normal using the cross product of the collision vector and "up" direction
 						collisionNormal = Vector3.Cross(collisionVector, Vector3.up).normalized;
 
+						rect = HandleCollisionResponse(rect, collisionNormal, 0, self);
+						self.pos = rect.center;
+
+
 						break;
 					}
 				}
@@ -138,6 +152,10 @@ namespace TestMod
 						Vector2 collisionVector = rect.center - point;
 						// Calculate the surface normal using the cross product of the collision vector and "up" direction
 						collisionNormal = Vector3.Cross(collisionVector, Vector3.up).normalized;
+
+						rect = HandleCollisionResponse(rect, collisionNormal, 0, self);
+						self.pos = rect.center;
+
 
 						break;
 					}
@@ -156,6 +174,8 @@ namespace TestMod
 						collisionNormal = Vector3.Cross(collisionVector, Vector3.up).normalized;
 
 						rect = HandleCollisionResponse(rect, collisionNormal, 0, self);
+						self.pos = rect.center;
+
 
 						break;
 					}
@@ -181,7 +201,7 @@ namespace TestMod
 		{
 			if (self.owner is Crate)
 			{
-				Debug.Log("Running Crate Collision");
+				Debug.Log("Running Crate Collision (Vertical)");
 				self.contactPoint.x = 0;
 
 				// Used to know how far per pixel to Lerp from one Vector2 to the next when calculating number of points for collision detection.
@@ -215,6 +235,9 @@ namespace TestMod
 						// Calculate the surface normal using the cross product of the collision vector and "up" direction
 						collisionNormal = Vector3.Cross(collisionVector, Vector3.up).normalized;
 
+						rect = HandleCollisionResponse(rect, collisionNormal, 0, self);
+						self.pos = rect.center;
+
 						break;
 					}
 				}
@@ -231,6 +254,9 @@ namespace TestMod
 						// Calculate the surface normal using the cross product of the collision vector and "up" direction
 						collisionNormal = Vector3.Cross(collisionVector, Vector3.up).normalized;
 
+						rect = HandleCollisionResponse(rect, collisionNormal, 0, self);
+						self.pos = rect.center;
+
 						break;
 					}
 				}
@@ -246,6 +272,9 @@ namespace TestMod
 						Vector2 collisionVector = rect.center - point;
 						// Calculate the surface normal using the cross product of the collision vector and "up" direction
 						collisionNormal = Vector3.Cross(collisionVector, Vector3.up).normalized;
+
+						rect = HandleCollisionResponse(rect, collisionNormal, 0, self);
+						self.pos = rect.center;
 
 						break;
 					}
@@ -264,12 +293,11 @@ namespace TestMod
 						collisionNormal = Vector3.Cross(collisionVector, Vector3.up).normalized;
 
 						rect = HandleCollisionResponse(rect, collisionNormal, 0, self);
+						self.pos = rect.center;
 
 						break;
 					}
 				}
-
-
 
 				Quaternion rotation = Quaternion.FromToRotation(Vector3.up, collisionNormal);
 
@@ -292,10 +320,11 @@ namespace TestMod
 			// Definitely gets to at least this point in the stack though (meaning the object does get loaded in the game and checks for collision)
 			RWCustom.IntVector2 tilePosition = self.owner.room.GetTilePosition(self.lastPos);
 			RWCustom.IntVector2 tilePos = self.owner.room.GetTilePosition(pointToCheck);
+			//Debug.Log(tilePos); (log lags a lot)
 			if (self.owner.room.GetTile(tilePos.x, tilePos.y).Terrain == Room.Tile.TerrainType.Solid /*&& self.owner.room.GetTile(tilePos.x - 1, tilePos.y).Terrain != Room.Tile.TerrainType.Solid && (tilePosition.x < tilePos.x || self.owner.room.GetTile(self.lastPos).Terrain == Room.Tile.TerrainType.Solid)*/)
 			{
 				// Passes first if statement, stops here with the rectangle.Contains method (not sure why, should be working?).
-				if (rectangle.Contains(new Vector2(tilePos.x, tilePos.y)))
+				if (rectangle.Contains(new Vector2(tilePos.x * 20, tilePos.y * 20)))
 				{
 					return true;
 				}
