@@ -15,6 +15,8 @@ using System.Security.Permissions;
 
 // Plugin class has (or at least im attempting) to get custom rectangular collision. Definitely a WIP rn
 
+// Problem with update method, need to either make compatible with game or make a new update method entirely
+
 #pragma warning disable CS0618 // Do not remove the following line.
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
 
@@ -27,9 +29,9 @@ namespace TestMod
 	[BepInPlugin("cactus.testMod", "Test Mod - Crate", "0.1.0")]
 	sealed class Plugin : BaseUnityPlugin
 	{
-		public Rect rect;
 		public Vector2 pivot;
 		public float rotationInDegrees;
+
 		public void OnEnable()
 		{
 			// How to make a hook:
@@ -47,20 +49,18 @@ namespace TestMod
 
 			On.BodyChunk.ctor += BodyChunk_ctor;
 			On.BodyChunk.Update += BodyChunk_Update;
+			//On.RoomCamera.SpriteLeaser.ctor += SpriteLeaser_ctor;
 			On.BodyChunk.CheckHorizontalCollision += BodyChunk_CheckHorizontalCollision;
 			On.BodyChunk.CheckVerticalCollision += BodyChunk_CheckVerticalCollision;
 		}
 
-		private void BodyChunk_ctor(On.BodyChunk.orig_ctor orig, BodyChunk self, PhysicalObject owner, int index, Vector2 pos, float rad, float mass)
+        private void BodyChunk_ctor(On.BodyChunk.orig_ctor orig, BodyChunk self, PhysicalObject owner, int index, Vector2 pos, float rad, float mass)
 		{
 			orig(self, owner, index, pos, rad, mass);
 
 			if (self.owner is Crate)
 			{
-				Debug.Log("Loading Crate BodyChunk ctor!");
-				rect = new Rect(new Vector2(-rad, rad), new Vector2(rad * 2, rad * 2));
 				rotationInDegrees = 45f;
-				pivot = new Vector2(rect.center.x, rect.center.y);
 			}
 
 		}
@@ -69,34 +69,27 @@ namespace TestMod
 			orig(self);
 			if (self.owner is Crate)
             {
-				rect.center = self.pos;
-				Debug.Log("Rect Pos: " + rect.center);
-				Debug.Log("Circle Pos: " + self.pos);
-            }
+			}
 		}
+
 
 		private void BodyChunk_CheckHorizontalCollision(On.BodyChunk.orig_CheckHorizontalCollision orig, BodyChunk self)
 		{
-			if (self.owner is Crate)
+			/*if (self.owner is Crate)
 			{
-				Debug.Log("Running Crate Collision (Horizontal)");
+				var crate = self.owner as Crate;
+				//Debug.Log("Running Crate Collision (Horizontal)");
 				self.contactPoint.x = 0;
 
 				// Used to know how far per pixel to Lerp from one Vector2 to the next when calculating number of points for collision detection.
 				// Smaller values are very likely to get laggy
 				Vector2 tileSize = new(1, 1);
 
-				// Get the corner points of the rectangle
-				Vector2 topLeft = new Vector2(rect.xMin, rect.yMax);
-				Vector2 topRight = new Vector2(rect.xMax, rect.yMax);
-				Vector2 bottomLeft = new Vector2(rect.xMin, rect.yMin);
-				Vector2 bottomRight = new Vector2(rect.xMax, rect.yMin);
-
 				// Calculate the number of points along each edge of the rectangle
-				int pointsAlongTop = Mathf.RoundToInt(rect.width / tileSize.x);
-				int pointsAlongBottom = Mathf.RoundToInt(rect.width / tileSize.x);
-				int pointsAlongLeft = Mathf.RoundToInt(rect.height / tileSize.y);
-				int pointsAlongRight = Mathf.RoundToInt(rect.height / tileSize.y);
+				int pointsAlongTop = Mathf.RoundToInt(crate.rect.width / tileSize.x);
+				int pointsAlongBottom = Mathf.RoundToInt(crate.rect.width / tileSize.x);
+				int pointsAlongLeft = Mathf.RoundToInt(crate.rect.height / tileSize.y);
+				int pointsAlongRight = Mathf.RoundToInt(crate.rect.height / tileSize.y);
 
 				// Initialize collision normal to zero
 				Vector2 collisionNormal = Vector2.zero;
@@ -104,17 +97,17 @@ namespace TestMod
 				// Generate the points along the top edge of the rectangle
 				for (int i = 0; i <= pointsAlongTop; i++)
 				{
-					Vector2 point = Vector2.Lerp(topLeft, topRight, (float)i / pointsAlongTop);
+					Vector2 point = Vector2.Lerp(crate.rect.corners[2], crate.rect.corners[3], (float)i / pointsAlongTop);
 					// Check for collision with tiles at the point
-					if (CheckTileCollision(point, self, rect))
+					if (CheckTileCollision(point, self, crate.rect))
 					{
 						// Calculate the collision vector from the point to the center of the rectangle
-						Vector2 collisionVector = rect.center - point;
+						Vector2 collisionVector = crate.rect.center - point;
 						// Calculate the surface normal using the cross product of the collision vector and "up" direction
 						collisionNormal = Vector3.Cross(collisionVector, Vector3.up).normalized;
 
-						rect = HandleCollisionResponse(rect, collisionNormal, 0, self);
-						self.pos = rect.center;
+						crate.rect = HandleCollisionResponse(crate.rect, collisionNormal, 0, self);
+						self.pos = crate.rect.center;
 
 
 						break;
@@ -124,17 +117,17 @@ namespace TestMod
 				// Generate the points along the bottom edge of the rectangle
 				for (int i = 0; i <= pointsAlongBottom; i++)
 				{
-					Vector2 point = Vector2.Lerp(bottomLeft, bottomRight, (float)i / pointsAlongBottom);
+					Vector2 point = Vector2.Lerp(crate.rect.corners[0], crate.rect.corners[1], (float)i / pointsAlongBottom);
 					// Check for collision with tiles at the point
-					if (CheckTileCollision(point, self, rect))
+					if (CheckTileCollision(point, self, crate.rect))
 					{
 						// Calculate the collision vector from the point to the center of the rectangle
-						Vector2 collisionVector = rect.center - point;
+						Vector2 collisionVector = crate.rect.center - point;
 						// Calculate the surface normal using the cross product of the collision vector and "up" direction
 						collisionNormal = Vector3.Cross(collisionVector, Vector3.up).normalized;
 
-						rect = HandleCollisionResponse(rect, collisionNormal, 0, self);
-						self.pos = rect.center;
+						crate.rect = HandleCollisionResponse(crate.rect, collisionNormal, 0, self);
+						self.pos = crate.rect.center;
 
 
 						break;
@@ -144,17 +137,16 @@ namespace TestMod
 				// Generate the points along the left edge of the rectangle
 				for (int i = 0; i <= pointsAlongLeft; i++)
 				{
-					Vector2 point = Vector2.Lerp(bottomLeft, topLeft, (float)i / pointsAlongLeft);
+					Vector2 point = Vector2.Lerp(crate.rect.corners[0], crate.rect.corners[2], (float)i / pointsAlongLeft);
 					// Check for collision with tiles at the point
-					if (CheckTileCollision(point, self, rect))
+					if (CheckTileCollision(point, self, crate.rect))
 					{
 						// Calculate the collision vector from the point to the center of the rectangle
-						Vector2 collisionVector = rect.center - point;
+						Vector2 collisionVector = crate.rect.center - point;
 						// Calculate the surface normal using the cross product of the collision vector and "up" direction
 						collisionNormal = Vector3.Cross(collisionVector, Vector3.up).normalized;
 
-						rect = HandleCollisionResponse(rect, collisionNormal, 0, self);
-						self.pos = rect.center;
+						crate.rect = HandleCollisionResponse(crate.rect, collisionNormal, 0, self);
 
 
 						break;
@@ -164,17 +156,17 @@ namespace TestMod
 				// Generate the points along the right edge of the rectangle
 				for (int i = 0; i <= pointsAlongRight; i++)
 				{
-					Vector2 point = Vector2.Lerp(bottomRight, topRight, (float)i / pointsAlongRight);
+					Vector2 point = Vector2.Lerp(crate.rect.corners[1], crate.rect.corners[3], (float)i / pointsAlongRight);
 					// Check for collision with tiles at the point
-					if (CheckTileCollision(point, self, rect))
+					if (CheckTileCollision(point, self, crate.rect))
 					{
 						// Calculate the collision vector from the point to the center of the rectangle
-						Vector2 collisionVector = rect.center - point;
+						Vector2 collisionVector = crate.rect.center - point;
 						// Calculate the surface normal using the cross product of the collision vector and "up" direction
 						collisionNormal = Vector3.Cross(collisionVector, Vector3.up).normalized;
 
-						rect = HandleCollisionResponse(rect, collisionNormal, 0, self);
-						self.pos = rect.center;
+						crate.rect = HandleCollisionResponse(crate.rect, collisionNormal, 0, self);
+						self.pos = crate.rect.center;
 
 
 						break;
@@ -185,13 +177,13 @@ namespace TestMod
 
 				Quaternion rotation = Quaternion.FromToRotation(Vector3.up, collisionNormal);
 
-				Vector2 position = rect.center + collisionNormal * (rect.width / 2f);
+				Vector2 position = crate.rect.center + collisionNormal * (crate.rect.width / 2f);
 
 				rotationInDegrees = rotation.ToEulerAngles().z;
 				rotationInDegrees %= 360;
-				rect.position = position;
+				crate.rect.center = position;
 			}
-			else
+			else*/
 			{
 				orig(self);
 			}
@@ -199,26 +191,22 @@ namespace TestMod
 
 		private void BodyChunk_CheckVerticalCollision(On.BodyChunk.orig_CheckVerticalCollision orig, BodyChunk self)
 		{
-			if (self.owner is Crate)
+
+			/*if (self.owner is Crate)
 			{
-				Debug.Log("Running Crate Collision (Vertical)");
+				var crate = self.owner as Crate;
+				//Debug.Log("Running Crate Collision (Horizontal)");
 				self.contactPoint.x = 0;
 
 				// Used to know how far per pixel to Lerp from one Vector2 to the next when calculating number of points for collision detection.
 				// Smaller values are very likely to get laggy
 				Vector2 tileSize = new(1, 1);
 
-				// Get the corner points of the rectangle
-				Vector2 topLeft = new Vector2(rect.xMin, rect.yMax);
-				Vector2 topRight = new Vector2(rect.xMax, rect.yMax);
-				Vector2 bottomLeft = new Vector2(rect.xMin, rect.yMin);
-				Vector2 bottomRight = new Vector2(rect.xMax, rect.yMin);
-
 				// Calculate the number of points along each edge of the rectangle
-				int pointsAlongTop = Mathf.RoundToInt(rect.width / tileSize.x);
-				int pointsAlongBottom = Mathf.RoundToInt(rect.width / tileSize.x);
-				int pointsAlongLeft = Mathf.RoundToInt(rect.height / tileSize.y);
-				int pointsAlongRight = Mathf.RoundToInt(rect.height / tileSize.y);
+				int pointsAlongTop = Mathf.RoundToInt(crate.rect.width / tileSize.x);
+				int pointsAlongBottom = Mathf.RoundToInt(crate.rect.width / tileSize.x);
+				int pointsAlongLeft = Mathf.RoundToInt(crate.rect.height / tileSize.y);
+				int pointsAlongRight = Mathf.RoundToInt(crate.rect.height / tileSize.y);
 
 				// Initialize collision normal to zero
 				Vector2 collisionNormal = Vector2.zero;
@@ -226,17 +214,18 @@ namespace TestMod
 				// Generate the points along the top edge of the rectangle
 				for (int i = 0; i <= pointsAlongTop; i++)
 				{
-					Vector2 point = Vector2.Lerp(topLeft, topRight, (float)i / pointsAlongTop);
+					Vector2 point = Vector2.Lerp(crate.rect.corners[2], crate.rect.corners[3], (float)i / pointsAlongTop);
 					// Check for collision with tiles at the point
-					if (CheckTileCollision(point, self, rect))
+					if (CheckTileCollision(point, self, crate.rect))
 					{
 						// Calculate the collision vector from the point to the center of the rectangle
-						Vector2 collisionVector = rect.center - point;
+						Vector2 collisionVector = crate.rect.center - point;
 						// Calculate the surface normal using the cross product of the collision vector and "up" direction
 						collisionNormal = Vector3.Cross(collisionVector, Vector3.up).normalized;
 
-						rect = HandleCollisionResponse(rect, collisionNormal, 0, self);
-						self.pos = rect.center;
+						crate.rect = HandleCollisionResponse(crate.rect, collisionNormal, 0, self);
+						self.pos = crate.rect.center;
+
 
 						break;
 					}
@@ -245,17 +234,18 @@ namespace TestMod
 				// Generate the points along the bottom edge of the rectangle
 				for (int i = 0; i <= pointsAlongBottom; i++)
 				{
-					Vector2 point = Vector2.Lerp(bottomLeft, bottomRight, (float)i / pointsAlongBottom);
+					Vector2 point = Vector2.Lerp(crate.rect.corners[0], crate.rect.corners[1], (float)i / pointsAlongBottom);
 					// Check for collision with tiles at the point
-					if (CheckTileCollision(point, self, rect))
+					if (CheckTileCollision(point, self, crate.rect))
 					{
 						// Calculate the collision vector from the point to the center of the rectangle
-						Vector2 collisionVector = rect.center - point;
+						Vector2 collisionVector = crate.rect.center - point;
 						// Calculate the surface normal using the cross product of the collision vector and "up" direction
 						collisionNormal = Vector3.Cross(collisionVector, Vector3.up).normalized;
 
-						rect = HandleCollisionResponse(rect, collisionNormal, 0, self);
-						self.pos = rect.center;
+						crate.rect = HandleCollisionResponse(crate.rect, collisionNormal, 0, self);
+						self.pos = crate.rect.center;
+
 
 						break;
 					}
@@ -264,17 +254,17 @@ namespace TestMod
 				// Generate the points along the left edge of the rectangle
 				for (int i = 0; i <= pointsAlongLeft; i++)
 				{
-					Vector2 point = Vector2.Lerp(bottomLeft, topLeft, (float)i / pointsAlongLeft);
+					Vector2 point = Vector2.Lerp(crate.rect.corners[0], crate.rect.corners[2], (float)i / pointsAlongLeft);
 					// Check for collision with tiles at the point
-					if (CheckTileCollision(point, self, rect))
+					if (CheckTileCollision(point, self, crate.rect))
 					{
 						// Calculate the collision vector from the point to the center of the rectangle
-						Vector2 collisionVector = rect.center - point;
+						Vector2 collisionVector = crate.rect.center - point;
 						// Calculate the surface normal using the cross product of the collision vector and "up" direction
 						collisionNormal = Vector3.Cross(collisionVector, Vector3.up).normalized;
 
-						rect = HandleCollisionResponse(rect, collisionNormal, 0, self);
-						self.pos = rect.center;
+						crate.rect = HandleCollisionResponse(crate.rect, collisionNormal, 0, self);
+
 
 						break;
 					}
@@ -283,81 +273,85 @@ namespace TestMod
 				// Generate the points along the right edge of the rectangle
 				for (int i = 0; i <= pointsAlongRight; i++)
 				{
-					Vector2 point = Vector2.Lerp(bottomRight, topRight, (float)i / pointsAlongRight);
+					Vector2 point = Vector2.Lerp(crate.rect.corners[1], crate.rect.corners[3], (float)i / pointsAlongRight);
 					// Check for collision with tiles at the point
-					if (CheckTileCollision(point, self, rect))
+					if (CheckTileCollision(point, self, crate.rect))
 					{
 						// Calculate the collision vector from the point to the center of the rectangle
-						Vector2 collisionVector = rect.center - point;
+						Vector2 collisionVector = crate.rect.center - point;
 						// Calculate the surface normal using the cross product of the collision vector and "up" direction
 						collisionNormal = Vector3.Cross(collisionVector, Vector3.up).normalized;
 
-						rect = HandleCollisionResponse(rect, collisionNormal, 0, self);
-						self.pos = rect.center;
+						crate.rect = HandleCollisionResponse(crate.rect, collisionNormal, 0, self);
+						self.pos = crate.rect.center;
+
 
 						break;
 					}
 				}
 
+
+
 				Quaternion rotation = Quaternion.FromToRotation(Vector3.up, collisionNormal);
 
-				Vector2 position = rect.center + collisionNormal * (rect.width / 2f);
+				Vector2 position = crate.rect.center + collisionNormal * (crate.rect.width / 2f);
 
 				rotationInDegrees = rotation.ToEulerAngles().z;
 				rotationInDegrees %= 360;
-				rect.position = position;
+				crate.rect.center = position;
 			}
-			else
+			else*/
 			{
 				orig(self);
 			}
 		}
 
 		// Checks for collision between point provided and rectangle
-		public bool CheckTileCollision(Vector2 pointToCheck, BodyChunk self, Rect rectangle)
+		public bool CheckTileCollision(Vector2 pointToCheck, BodyChunk self, Rectangle rectangle)
 		{
 			// Debug.Log("Checking Tile Collision"); (This Log lags the game out lmao)
-			// Definitely gets to at least this point in the stack though (meaning the object does get loaded in the game and checks for collision)
 			RWCustom.IntVector2 tilePosition = self.owner.room.GetTilePosition(self.lastPos);
 			RWCustom.IntVector2 tilePos = self.owner.room.GetTilePosition(pointToCheck);
-			//Debug.Log(tilePos); (log lags a lot)
+			//Debug.Log(tilePos); //(log lags a lot)
 			if (self.owner.room.GetTile(tilePos.x, tilePos.y).Terrain == Room.Tile.TerrainType.Solid /*&& self.owner.room.GetTile(tilePos.x - 1, tilePos.y).Terrain != Room.Tile.TerrainType.Solid && (tilePosition.x < tilePos.x || self.owner.room.GetTile(self.lastPos).Terrain == Room.Tile.TerrainType.Solid)*/)
 			{
-				// Passes first if statement, stops here with the rectangle.Contains method (not sure why, should be working?).
-				if (rectangle.Contains(new Vector2(tilePos.x * 20, tilePos.y * 20)))
-				{
+				
+				// Note for modders: GetTile returns the position of the tile on the grid! The actual position of the object is in pixels, so the tilePos of it is it's position in pixels * 20!
+
 					return true;
-				}
+
 			}
 			return false;
 		}
 
 		// Something's up with the collision method here {as in, it don't work ): }, possibly need a second opinion on this
-		private Rect HandleCollisionResponse(Rect rectangle, Vector2 surfaceNormal, float penetrationDepth, BodyChunk self)
+		private Rectangle HandleCollisionResponse(Rectangle rectangle, Vector2 surfaceNormal, float penetrationDepth, BodyChunk self)
 		{
 			Debug.Log("Handling Collision Response!");
+
 			// Calculate the angle between the surface normal and the upward-facing vector
 			float angle = Mathf.Atan2(surfaceNormal.x, surfaceNormal.y) * Mathf.Rad2Deg;
 
 			// Rotate the rect by the opposite of the collision angle
-			rectangle = RotateRect(rectangle, -angle, self);
+			rectangle.UpdateCornerPointsWithAngle(-angle);
 
 			// Move the rect out of the collision by the penetration depth
-			rectangle.position += surfaceNormal * penetrationDepth;
-			self.pos = rectangle.position;
+			rectangle.Move(surfaceNormal * penetrationDepth);
+			//self.pos = rectangle.center;
 
 			// Rotate the rect back to its original orientation
-			rectangle = RotateRect(rectangle, angle, self);
+			rectangle.UpdateCornerPointsWithAngle(angle);
 
 			// Update the position and rotation of the game object based on the new rect position and rotation
-			transform.position = new Vector3(rectangle.x, rectangle.y, transform.position.z);
+			transform.position = new Vector3(rectangle.center.x, rectangle.center.y, transform.position.z);
 			transform.rotation = Quaternion.Euler(0f, 0f, angle);
 
 			return rectangle;
 		}
 
 		// Rotates the rectangle to the desiered angle
-		private Rect RotateRect(Rect rectangle, float angle, BodyChunk self)
+		/*
+		private Rect RotateRect(Rectangle rectangle, float angle, BodyChunk self)
 		{
 			rotationInDegrees = angle;
 			Debug.Log("Rotating Rectangle");
@@ -389,5 +383,8 @@ namespace TestMod
                 self.gravity = 0.1f;
                 self.bounce = 3.0f;
             }*/
+		public static string CurrentRoomName { get; private set; }
+		public int x = 500;
+		public int y = 500;
 	}
 }

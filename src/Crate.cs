@@ -13,7 +13,8 @@ namespace TestMod
         public float lastRotation;
         public float rotVel;
         public float darkness;
-
+        public Rectangle rect;
+        public float rad;
         private readonly float rotationOffset;
 
         // Idea: Custom Code a square collision (very hard)
@@ -23,6 +24,7 @@ namespace TestMod
         public CrateAbstract Abstr { get; }
         public Crate(CrateAbstract abstr) : base(abstr)
         {
+            rad = 30f;
             Debug.Log("Initializing Crate Object!");
             float mass = 10f;
             Abstr = abstr;
@@ -35,18 +37,14 @@ namespace TestMod
                     positions.Add(new Vector2(x, y) * 20f);
                 }
             }*/
-
             positions.Add(new Vector2(0, 0) * 20f);
             bodyChunks = new BodyChunk[positions.Count];
 
             // Create all body chunks
             for(int i = 0; i < bodyChunks.Length; i++)
             {
-                bodyChunks[i] = new BodyChunk(this, i, new Vector2(), 30f, mass / bodyChunks.Length);
+                bodyChunks[i] = new BodyChunk(this, i, new Vector2(), rad, mass / bodyChunks.Length);
             }
-
-            // Scale up the middle chunk
-            bodyChunks[0].rad = 40f;
 
             bodyChunkConnections = new BodyChunkConnection[bodyChunks.Length * (bodyChunks.Length - 1) / 2];
             int connection = 0;
@@ -75,6 +73,9 @@ namespace TestMod
             lastRotation = rotation;
             rotationOffset = Rand * 30 - 15;
 
+            Debug.Log("Loading Crate BodyChunk ctor!");
+            rect = new Rectangle(this.bodyChunks[0].pos, rad * 2, rad * 2);
+
         }
 
         public override void Grabbed(Creature.Grasp grasp)
@@ -94,6 +95,12 @@ namespace TestMod
                 // Slows crate down to stop the "slipperyness" that it has when slippin' accross the floor
                 bodyChunks[0].vel = new Vector2(bodyChunks[0].vel.x * 0.65f, bodyChunks[0].vel.y);
             }*/
+
+            rect.center = firstChunk.pos - (new Vector2(firstChunk.rad, firstChunk.rad * 2));
+            rect.UpdateCornerPoints();
+            //Debug.Log(rect.center.x + " " + rect.center.y);
+
+
             var chunk = firstChunk;
             lastRotation = rotation;
             rotation += rotVel * Vector2.Distance(chunk.lastPos, chunk.pos);
@@ -246,13 +253,16 @@ namespace TestMod
 
         public void InitiateSprites(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
         {
-            sLeaser.sprites = new FSprite[bodyChunks.Length];
-
+            sLeaser.sprites = new FSprite[bodyChunks.Length + rect.corners.Length];
+            
             /*sLeaser.sprites = new FSprite[1];
             sLeaser.sprites[0] = new FSprite("icon_Crate", true);*/
             
             for(int i = 0; i < bodyChunks.Length; i++)
                 sLeaser.sprites[i] = new FSprite("Circle20");
+
+            for (int i = bodyChunks.Length; i < bodyChunks.Length + rect.corners.Length; i++)
+                sLeaser.sprites[i] = new FSprite("Circle4");
 
             AddToContainer(sLeaser, rCam, null);
         }
@@ -267,26 +277,42 @@ namespace TestMod
                 spr.scale = bodyChunks[i].rad / 10f;
             }
 
-            /*if (slatedForDeletetion || room != rCam.room)
+
+            var spr1 = sLeaser.sprites[bodyChunks.Length];
+            spr1.SetPosition(rect.corners[0]);
+            spr1.scale = 5f;
+
+            var spr2 = sLeaser.sprites[bodyChunks.Length + 1];
+            spr2.SetPosition(rect.corners[1]);
+            spr2.scale = 5f;
+
+            var spr3 = sLeaser.sprites[bodyChunks.Length + 2];
+            spr3.SetPosition(rect.corners[2]);
+            spr3.scale = 5f;
+
+            var spr4 = sLeaser.sprites[bodyChunks.Length + 3];
+            spr4.SetPosition(rect.corners[3]);
+            spr4.scale = 5f;
+
+
+            if (slatedForDeletetion || room != rCam.room)
                 sLeaser.CleanSpritesAndRemove();
 
-            Vector2 pos = Vector2.Lerp(bodyChunks[4].lastPos, bodyChunks[4].pos, timeStacker);
-            float num = Mathf.InverseLerp(305f, 380f, timeStacker);
-            pos.y -= 20f * Mathf.Pow(num, 3f);
-            float num2 = Mathf.Pow(1f - num, 0.25f);
-            lastDarkness = darkness;
-            darkness = rCam.room.Darkness(pos);
-            darkness *= 1f - 0.5f * rCam.room.LightSourceExposure(pos);
-
-
-                sLeaser.sprites[0].x = pos.x - camPos.x;
-                sLeaser.sprites[0].y = pos.y - camPos.y;
-                sLeaser.sprites[0].rotation = Mathf.Lerp(lastRotation, rotation, timeStacker);
-                sLeaser.sprites[0].scaleY = num2 * Abstr.scaleY;
-                sLeaser.sprites[0].scaleX = num2 * Abstr.scaleX;*/
 
             sLeaser.sprites[0].rotation = Mathf.Lerp(lastRotation, rotation, timeStacker);
             sLeaser.sprites[0].color = Color.Lerp(Custom.HSL2RGB(Abstr.hue, Abstr.saturation, 0.55f), Color.blue, darkness);
+
+            sLeaser.sprites[1].rotation = Mathf.Lerp(lastRotation, rotation, timeStacker);
+            sLeaser.sprites[1].color = Color.Lerp(Custom.HSL2RGB(Abstr.hue, Abstr.saturation, 0.55f), Color.red, darkness);
+
+            sLeaser.sprites[2].rotation = Mathf.Lerp(lastRotation, rotation, timeStacker);
+            sLeaser.sprites[2].color = Color.Lerp(Custom.HSL2RGB(Abstr.hue, Abstr.saturation, 0.55f), Color.red, darkness);
+
+            sLeaser.sprites[3].rotation = Mathf.Lerp(lastRotation, rotation, timeStacker);
+            sLeaser.sprites[3].color = Color.Lerp(Custom.HSL2RGB(Abstr.hue, Abstr.saturation, 0.55f), Color.red, darkness);
+
+            sLeaser.sprites[4].rotation = Mathf.Lerp(lastRotation, rotation, timeStacker);
+            sLeaser.sprites[4].color = Color.Lerp(Custom.HSL2RGB(Abstr.hue, Abstr.saturation, 0.55f), Color.red, darkness);
             // TODO: Add the sprite for this back
             // Typically, Rain World objects use fully white sprites, then color them via code. This allows them to change based on the palette and animate in cool ways
             // Sprite angle can be gotten by taking the angle from the center chunk to one of the outside ones, or taking the angle for all of them and using some sort of average
