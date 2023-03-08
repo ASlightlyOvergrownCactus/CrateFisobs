@@ -33,7 +33,7 @@ namespace TestMod
 
         public void UpdateCornerPoints()
         {
-            Debug.Log(center);
+            //Debug.Log(center);
             // Define the corner points of the rectangle
             corners[0] = new Vector2(center.x - width / 2f, center.y - height / 2f); // Bottom Left
             corners[1] = new Vector2(center.x + width / 2f, center.y - height / 2f); // Bottom Right
@@ -57,7 +57,7 @@ namespace TestMod
         public void UpdateCornerPointsWithAngle(float angle)
         {
             // Define the corner points of the rectangle
-            Debug.Log(center);
+            //Debug.Log(center);
             corners[0] = new Vector2(center.x - width / 2f, center.y - height / 2f); // Bottom Left
             
             corners[1] = new Vector2(center.x + width / 2f, center.y - height / 2f); // Bottom Right
@@ -83,10 +83,10 @@ namespace TestMod
             //    corners[i] = rotationMatrix * new Vector4(corners[i].x, corners[i].y, 0f, 1f);
             //}
 
-            Debug.Log(corners[0]);
-            Debug.Log(corners[1]);
-            Debug.Log(corners[2]);
-            Debug.Log(corners[3]);
+            //Debug.Log(corners[0]);
+            //Debug.Log(corners[1]);
+            //Debug.Log(corners[2]);
+            //Debug.Log(corners[3]);
         }
     }
 }
