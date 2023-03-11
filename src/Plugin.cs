@@ -298,7 +298,7 @@ namespace TestMod
 			// Debug.Log("Checking Tile Collision"); (This Log lags the game out lmao)
 			RWCustom.IntVector2 tilePos = self.owner.room.GetTilePosition(pointToCheck);
 			//Debug.Log(tilePos); //(log lags a lot)
-			if (self.owner.room.GetTile(tilePos.x, tilePos.y).Terrain == Room.Tile.TerrainType.Solid /*&& self.owner.room.GetTile(tilePos.x - 1, tilePos.y).Terrain != Room.Tile.TerrainType.Solid && (tilePosition.x < tilePos.x || self.owner.room.GetTile(self.lastPos).Terrain == Room.Tile.TerrainType.Solid)*/)
+			if (self.owner.room.GetTile(tilePos.x + 2, tilePos.y + 3).Terrain == Room.Tile.TerrainType.Solid /*&& self.owner.room.GetTile(tilePos.x - 1, tilePos.y).Terrain != Room.Tile.TerrainType.Solid && (tilePosition.x < tilePos.x || self.owner.room.GetTile(self.lastPos).Terrain == Room.Tile.TerrainType.Solid)*/)
 			{
 				
 				// Note for modders: GetTile returns the position of the tile on the grid! The actual position of the object is in pixels, so the tilePos of it is it's position in pixels * 20!
@@ -312,11 +312,11 @@ namespace TestMod
 		// Something's up with the collision method here {as in, it don't work ): }, possibly need a second opinion on this
 		private Rectangle HandleCollisionResponse(Rectangle rectangle, Vector2 surfaceNormal, float penetrationDepth, BodyChunk self)
 		{
-			//Debug.Log("Handling Collision Response!");
+			Debug.Log("Handling Collision Response!");
 
 			// Calculate the angle between the surface normal and the upward-facing vector
 			//float angle = Mathf.Atan2(surfaceNormal.x, surfaceNormal.y) * Mathf.Rad2Deg;
-
+			self.pos = self.pos + (new Vector2(0f, .5f));
 			// Rotate the rect by the opposite of the collision angle
 			//rectangle.UpdateCornerPointsWithAngle(-angle);
 
@@ -325,7 +325,7 @@ namespace TestMod
 			float dotProduct = Vector2.Dot(self.vel, surfaceNormal);
 
 			// Rotate the rect back to its original orientation
-			//rectangle.UpdateCornerPointsWithAngle(angle);
+			rectangle.UpdateCornerPoints();
 
 			// Update the position and rotation of the game object based on the new rect position and rotation
 			//transform.position = new Vector3(rectangle.center.x, rectangle.center.y, transform.position.z);
@@ -335,9 +335,15 @@ namespace TestMod
 			// Need to firgure out how to use surfaceNormals to make this collision work!!!
 			// Also: Possibly calculate a vector based on the point on collision and then translate that to both rotation of the rectangle and velocity of the center?
 			Vector2 reflection = 2 * dotProduct * surfaceNormal - self.vel;
+			
+			self.vel = self.owner.bounce * reflection;
+			//self.vel = self.vel * -1f * .9f;
 
-			self.vel = 0.5f * reflection;
-			//self.vel = self.vel * -1f * 0.1f;
+			if (Mathf.Abs(self.vel.y) < 1f + 9f * (1f - self.owner.bounce))
+			{
+				self.vel.y = 0f;
+			}
+
 			Debug.Log(self.pos);
 
 			return rectangle;
