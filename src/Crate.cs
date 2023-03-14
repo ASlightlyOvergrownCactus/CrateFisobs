@@ -230,15 +230,7 @@ namespace TestMod
 
             Vector2 center = placeRoom.MiddleOfTile(abstractPhysicalObject.pos);
             bodyChunks[0].HardSetPosition(new Vector2(0, 0) * 20f + center);
-            /*int i = 0;
-            for (int x = -1; x <= 1; x++)
-            {
-                for (int y = -1; y <= 1; y++)
-                {
-                    
-                    i++;
-                }
-            }*/
+            rect.UpdateCornerPoints();
         }
 
         public override void TerrainImpact(int chunk, IntVector2 direction, float speed, bool firstContact)
