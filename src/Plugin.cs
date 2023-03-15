@@ -207,7 +207,7 @@ namespace TestMod
 
 				// Used to know how far per pixel to Lerp from one Vector2 to the next when calculating number of points for collision detection.
 				// Smaller values are very likely to get laggy
-				Vector2 tileSize = new(1, 1);
+				Vector2 tileSize = new(5, 5);
 
 				// Calculate the number of points along each edge of the rectangle
 				int pointsAlongTop = Mathf.RoundToInt(crate.rect.width / tileSize.x);
@@ -323,6 +323,13 @@ namespace TestMod
 
 			RWCustom.IntVector2 tilePos = self.owner.room.GetTilePosition(pointToCheck);
 
+			Vector2 tileCenter = self.owner.room.MiddleOfTile(new RWCustom.IntVector2(tilePos.x, tilePos.y));
+
+			float rightDis = Vector2.Distance(tileCenter + new Vector2(-10f, 0f), self.pos);
+			float leftDis = Vector2.Distance(tileCenter + new Vector2(10f, 0f), self.pos);
+			float upDis = Vector2.Distance(tileCenter + new Vector2(0f, -10f), self.pos);
+			float downDis = Vector2.Distance(tileCenter + new Vector2(0f, 10f), self.pos);
+
 			switch (direction)
             {
 				case 0:
@@ -331,25 +338,37 @@ namespace TestMod
 				case 1: // Right Collision
 					if (self.owner.room.GetTile(tilePos.x + 2, tilePos.y + 3).Terrain == Room.Tile.TerrainType.Solid)
 					{
-						return true;
+						if (rightDis < leftDis && rightDis < upDis && rightDis < downDis)
+						{
+							return true;
+						}
 					}
 					break;
 				case 2: // Left Collision
 					if (self.owner.room.GetTile(tilePos.x + 2, tilePos.y + 3).Terrain == Room.Tile.TerrainType.Solid)
 					{
-						return true;
+						if (leftDis < rightDis && leftDis < upDis && leftDis < downDis)
+						{
+							return true;
+						}
 					}
 					break;
 				case 3: // Up Collision
 					if (self.owner.room.GetTile(tilePos.x + 2, tilePos.y + 3).Terrain == Room.Tile.TerrainType.Solid)
 					{
-						return true;
+						if (upDis < rightDis && upDis < leftDis && upDis < downDis)
+						{
+							return true;
+						}
 					}
 					break;
 				case 4: // Down Collision
 					if (self.owner.room.GetTile(tilePos.x + 2, tilePos.y + 3).Terrain == Room.Tile.TerrainType.Solid)
                     {
-						return true;
+						if (downDis < rightDis && downDis < upDis && downDis < leftDis)
+						{
+							return true;
+						}
                     }
 					break;
                 default:
@@ -367,7 +386,7 @@ namespace TestMod
 			float offset;
 			Vector2 offVec;
 
-			RWCustom.IntVector2 tilePos = self.owner.room.GetTilePosition(new Vector2(point.x + 2, point.y + 3));
+			RWCustom.IntVector2 tilePos = self.owner.room.GetTilePosition(new Vector2(point.x, point.y));
 
 			// Determines angle of position vector
 			float angleInRadians = (Mathf.PI / 180) * Vector2.Angle(self.pos, self.lastPos);
@@ -389,9 +408,9 @@ namespace TestMod
 
 					tileCenter += new Vector2(-10f, 0f);
 					offset = tileCenter.x - point.x;
-					Debug.Log(tileCenter.y + " " + point.y);
+					//Debug.Log(tileCenter.y + " " + point.y);
 					offVec = new Vector2(offset, 0f);
-					Debug.Log("Right" + offVec);
+					//Debug.Log("Right" + offVec);
 					self.pos += offVec;
 					rectangle.UpdateCornerPoints();
 					break;
@@ -401,9 +420,9 @@ namespace TestMod
 
 					tileCenter += new Vector2(10f, 0f);
 					offset = tileCenter.x - point.x;
-					Debug.Log(tileCenter.y + " " + point.y);
+					//Debug.Log(tileCenter.y + " " + point.y);
 					offVec = new Vector2(offset, 0f);
-					Debug.Log("Left" + offVec);
+					//Debug.Log("Left" + offVec);
 					self.pos += offVec;
 					rectangle.UpdateCornerPoints();
 					break;
@@ -413,9 +432,9 @@ namespace TestMod
 
 					tileCenter += new Vector2(0f, -10f);
 					offset = tileCenter.y - point.y;
-					Debug.Log(tileCenter.y + " " + point.y);
+					//Debug.Log(tileCenter.y + " " + point.y);
 					offVec = new Vector2(0f, offset);
-					Debug.Log("Up" + offVec);
+					//Debug.Log("Up" + offVec);
 					self.pos += offVec;
 					rectangle.UpdateCornerPoints();
 					break;
@@ -425,9 +444,9 @@ namespace TestMod
 
 					tileCenter += new Vector2(0f, 10f);
 					offset = tileCenter.y - point.y;
-					Debug.Log(tileCenter.y + " " + point.y);
+					//Debug.Log(tileCenter.y + " " + point.y);
 					offVec = new Vector2(0f, offset);
-					Debug.Log("Down" + offVec);
+					//Debug.Log("Down" + offVec);
 					self.pos += offVec;
 					rectangle.UpdateCornerPoints();
 					break;
@@ -436,7 +455,7 @@ namespace TestMod
 					Debug.Log("Invalid Direction entered in collision response!");
 					break;
             }
-			Debug.Log(self.pos);
+			//Debug.Log(self.pos);
 			return rectangle;
 		}
 
