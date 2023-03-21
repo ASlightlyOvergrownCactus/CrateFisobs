@@ -325,10 +325,21 @@ namespace TestMod
 
 			Vector2 tileCenter = self.owner.room.MiddleOfTile(new RWCustom.IntVector2(tilePos.x, tilePos.y));
 
-			float rightDis = Vector2.Distance(tileCenter + new Vector2(-10f, 0f), self.pos);
-			float leftDis = Vector2.Distance(tileCenter + new Vector2(10f, 0f), self.pos);
-			float upDis = Vector2.Distance(tileCenter + new Vector2(0f, -10f), self.pos);
-			float downDis = Vector2.Distance(tileCenter + new Vector2(0f, 10f), self.pos);
+			// Code chunk here calculates which side the crate collides with by checking which normal the position collided is closest to (might need some work)
+
+			Vector2 rightNormal = new(1f, 0);
+			Vector2 leftNormal = new(-1f, 0);
+			Vector2 upNormal = new(0, 1f);
+			Vector2 downNormal = new(0, -1f);
+
+			Vector2 sub = (tileCenter - pointToCheck).normalized;
+
+			float rightDis = Vector2.Distance(sub, rightNormal);
+			float leftDis = Vector2.Distance(sub, leftNormal);
+			float upDis = Vector2.Distance(sub, upNormal);
+			float downDis = Vector2.Distance(sub, downNormal);
+
+
 
 			switch (direction)
             {
@@ -338,8 +349,11 @@ namespace TestMod
 				case 1: // Right Collision
 					if (self.owner.room.GetTile(tilePos.x + 2, tilePos.y + 3).Terrain == Room.Tile.TerrainType.Solid)
 					{
+						//Debug.Log(sub);
+						//Debug.Log("Passed right!");
 						if (rightDis < leftDis && rightDis < upDis && rightDis < downDis)
 						{
+							//Debug.Log("Right!");
 							return true;
 						}
 					}
@@ -347,8 +361,11 @@ namespace TestMod
 				case 2: // Left Collision
 					if (self.owner.room.GetTile(tilePos.x + 2, tilePos.y + 3).Terrain == Room.Tile.TerrainType.Solid)
 					{
+						//Debug.Log(sub);
+						//Debug.Log("Passed left!");
 						if (leftDis < rightDis && leftDis < upDis && leftDis < downDis)
 						{
+							//Debug.Log("Left!");
 							return true;
 						}
 					}
@@ -356,8 +373,11 @@ namespace TestMod
 				case 3: // Up Collision
 					if (self.owner.room.GetTile(tilePos.x + 2, tilePos.y + 3).Terrain == Room.Tile.TerrainType.Solid)
 					{
+						//Debug.Log(sub);
+						//Debug.Log("Passed up!");
 						if (upDis < rightDis && upDis < leftDis && upDis < downDis)
 						{
+							//Debug.Log("Up!");
 							return true;
 						}
 					}
@@ -365,8 +385,11 @@ namespace TestMod
 				case 4: // Down Collision
 					if (self.owner.room.GetTile(tilePos.x + 2, tilePos.y + 3).Terrain == Room.Tile.TerrainType.Solid)
                     {
+						//Debug.Log(sub);
+						//Debug.Log("Passed down!");
 						if (downDis < rightDis && downDis < upDis && downDis < leftDis)
 						{
+							//Debug.Log("Down!");
 							return true;
 						}
                     }
