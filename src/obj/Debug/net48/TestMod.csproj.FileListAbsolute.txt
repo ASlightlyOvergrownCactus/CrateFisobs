@@ -64,7 +64,6 @@ C:\Users\Owner\Desktop\Rain World Modding\TestMods\Crate-Fisobs-MainFolder\Crate
 C:\Users\Owner\Desktop\Rain World Modding\TestMods\Crate-Fisobs-MainFolder\CrateFisobs\src\bin\Debug\net48\TestMod.pdb
 C:\Users\Owner\Desktop\Rain World Modding\TestMods\Crate-Fisobs-MainFolder\CrateFisobs\src\bin\Debug\net48\Fisobs (1).dll
 C:\Users\Owner\Desktop\Rain World Modding\TestMods\Crate-Fisobs-MainFolder\CrateFisobs\src\bin\Debug\net48\Fisobs (1).xml
-C:\Users\Owner\Desktop\Rain World Modding\TestMods\Crate-Fisobs-MainFolder\CrateFisobs\src\obj\Debug\net48\TestMod.csproj.AssemblyReference.cache
 C:\Users\Owner\Desktop\Rain World Modding\TestMods\Crate-Fisobs-MainFolder\CrateFisobs\src\obj\Debug\net48\TestMod.GeneratedMSBuildEditorConfig.editorconfig
 C:\Users\Owner\Desktop\Rain World Modding\TestMods\Crate-Fisobs-MainFolder\CrateFisobs\src\obj\Debug\net48\TestMod.AssemblyInfoInputs.cache
 C:\Users\Owner\Desktop\Rain World Modding\TestMods\Crate-Fisobs-MainFolder\CrateFisobs\src\obj\Debug\net48\TestMod.AssemblyInfo.cs
@@ -72,3 +71,4 @@ C:\Users\Owner\Desktop\Rain World Modding\TestMods\Crate-Fisobs-MainFolder\Crate
 C:\Users\Owner\Desktop\Rain World Modding\TestMods\Crate-Fisobs-MainFolder\CrateFisobs\src\obj\Debug\net48\TestMod.csproj.CopyComplete
 C:\Users\Owner\Desktop\Rain World Modding\TestMods\Crate-Fisobs-MainFolder\CrateFisobs\src\obj\Debug\net48\TestMod.dll
 C:\Users\Owner\Desktop\Rain World Modding\TestMods\Crate-Fisobs-MainFolder\CrateFisobs\src\obj\Debug\net48\TestMod.pdb
+C:\Users\Owner\Desktop\Rain World Modding\TestMods\Crate-Fisobs-MainFolder\CrateFisobs\src\obj\Debug\net48\TestMod.csproj.AssemblyReference.cache
