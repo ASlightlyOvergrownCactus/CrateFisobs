@@ -72,9 +72,27 @@ namespace TestMod
             rotation = Rand * 360f;
             lastRotation = rotation;
             rotationOffset = Rand * 30 - 15;
+            float width = rad * 2;
+            float height = rad * 2;
+            Vector2[] origCorners = new Vector2[3];
+
+            // Square
+            
+            origCorners[0] = new UnityEngine.Vector2(-width / 2f, -height / 2f); // Bottom Left
+            origCorners[1] = new UnityEngine.Vector2(width / 2f, -height / 2f); // Bottom Right
+            origCorners[2] = new UnityEngine.Vector2(-width / 2f, height / 2f); // Top Right
+            origCorners[3] = new UnityEngine.Vector2(width / 2f, height / 2f); // Top Left
+
+            // Triangle needs some work with the allingement, but custom shapes work!
+            // Triangle
+            /*
+            origCorners[0] = new UnityEngine.Vector2(0, 40);
+            origCorners[1] = new UnityEngine.Vector2(17.3f * 3, -10f * 3);
+            origCorners[2] = new UnityEngine.Vector2(-17.3f * 3, -10f * 3);
+            */
 
             Debug.Log("Loading Crate BodyChunk ctor!");
-            rect = new Rectangle(this.bodyChunks[0].pos, rad * 2, rad * 2);
+            rect = new Rectangle(this.bodyChunks[0].pos, rad * 2, rad * 2, origCorners);
 
         }
 
@@ -84,7 +102,7 @@ namespace TestMod
 
             this.grabbedBy.Add(grasp);
         }
-
+        
         public override void Update(bool eu)
         {
             base.Update(eu);
@@ -98,6 +116,7 @@ namespace TestMod
 
             rect.center = firstChunk.pos - (new Vector2(firstChunk.rad, firstChunk.rad * 2));
             rect.UpdateCornerPoints();
+            rect.angleDeg += 0.3f;
             //Debug.Log(rect.center.x + " " + rect.center.y);
 
 
@@ -269,22 +288,12 @@ namespace TestMod
                 spr.scale = bodyChunks[i].rad / 10f;
             }
 
-
-            var spr1 = sLeaser.sprites[bodyChunks.Length];
-            spr1.SetPosition(rect.corners[0]);
-            spr1.scale = 5f;
-
-            var spr2 = sLeaser.sprites[bodyChunks.Length + 1];
-            spr2.SetPosition(rect.corners[1]);
-            spr2.scale = 5f;
-
-            var spr3 = sLeaser.sprites[bodyChunks.Length + 2];
-            spr3.SetPosition(rect.corners[2]);
-            spr3.scale = 5f;
-
-            var spr4 = sLeaser.sprites[bodyChunks.Length + 3];
-            spr4.SetPosition(rect.corners[3]);
-            spr4.scale = 5f;
+            for (int a = 0; a < rect.corners.Length; a++)
+            {
+                var sprExt = sLeaser.sprites[bodyChunks.Length + a];
+                sprExt.SetPosition(rect.corners[a] - camPos + new Vector2(40f, 60f));
+                sprExt.scale = 5f;
+            }
 
 
             if (slatedForDeletetion || room != rCam.room)
@@ -294,17 +303,11 @@ namespace TestMod
             sLeaser.sprites[0].rotation = Mathf.Lerp(lastRotation, rotation, timeStacker);
             sLeaser.sprites[0].color = Color.Lerp(Custom.HSL2RGB(Abstr.hue, Abstr.saturation, 0.55f), Color.blue, darkness);
 
-            sLeaser.sprites[1].rotation = Mathf.Lerp(lastRotation, rotation, timeStacker);
-            sLeaser.sprites[1].color = Color.Lerp(Custom.HSL2RGB(Abstr.hue, Abstr.saturation, 0.55f), Color.red, darkness);
-
-            sLeaser.sprites[2].rotation = Mathf.Lerp(lastRotation, rotation, timeStacker);
-            sLeaser.sprites[2].color = Color.Lerp(Custom.HSL2RGB(Abstr.hue, Abstr.saturation, 0.55f), Color.red, darkness);
-
-            sLeaser.sprites[3].rotation = Mathf.Lerp(lastRotation, rotation, timeStacker);
-            sLeaser.sprites[3].color = Color.Lerp(Custom.HSL2RGB(Abstr.hue, Abstr.saturation, 0.55f), Color.red, darkness);
-
-            sLeaser.sprites[4].rotation = Mathf.Lerp(lastRotation, rotation, timeStacker);
-            sLeaser.sprites[4].color = Color.Lerp(Custom.HSL2RGB(Abstr.hue, Abstr.saturation, 0.55f), Color.red, darkness);
+            for (int a = 0; a < rect.corners.Length; a++)
+            {
+                sLeaser.sprites[bodyChunks.Length + a].rotation = Mathf.Lerp(lastRotation, rotation, timeStacker);
+                sLeaser.sprites[bodyChunks.Length + a].color = Color.Lerp(Custom.HSL2RGB(Abstr.hue, Abstr.saturation, 0.55f), Color.red, darkness);
+            }
             // TODO: Add the sprite for this back
             // Typically, Rain World objects use fully white sprites, then color them via code. This allows them to change based on the palette and animate in cool ways
             // Sprite angle can be gotten by taking the angle from the center chunk to one of the outside ones, or taking the angle for all of them and using some sort of average
