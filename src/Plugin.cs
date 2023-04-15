@@ -31,7 +31,6 @@ namespace TestMod
 	{
 		public Vector2 pivot;
 		public float rotationInDegrees;
-
 		public void OnEnable()
 		{
 			// How to make a hook:
@@ -69,6 +68,70 @@ namespace TestMod
 			orig(self);
 			if (self.owner is Crate)
             {
+				//Debug.Log("Starting Ray Loop");
+				var crate = self.owner as Crate;
+				// Raycaster
+				// Sets radius ray will go to
+				float rayRad = (self.rad * 2f) + 80f;
+				//Debug.Log(rayRad);
+				for (int degree = 1; degree <= 360; degree++)
+                {
+					// Rotates for rays on each degree around object
+					Vector2 ray = RWCustom.Custom.RotateAroundOrigo(Vector2.right, degree);
+					Vector2 rayDirection = ray;
+					ray += self.pos;
+
+					for (int pix = 1; pix <= rayRad; pix++)
+                    {
+						ray += rayDirection;
+
+						RWCustom.IntVector2 tilePos = self.owner.room.GetTilePosition(ray);
+						if (self.owner.room.GetTile(tilePos.x + 2, tilePos.y + 3).Terrain == Room.Tile.TerrainType.Solid)
+                        {
+							bool flag = false;
+
+							foreach(RWCustom.IntVector2 v in crate.rect.collisionContainer)
+                            {
+								//Debug.Log("Got into tile check");
+								if (tilePos.x == v.x && tilePos.y == v.y)
+                                {
+									//Debug.Log("Matching Tile");
+									flag = true;
+									break;
+                                }
+                            }
+							if (!flag)
+							{
+								//Debug.Log("Tile added to list");
+								crate.rect.collisionContainer.Add(tilePos);
+							}
+						}
+					}
+					
+				}
+				//Debug.Log("Reached removal");
+				if (crate.rect.collisionContainer.Count > 0)
+				{
+					for (int i = 0; i < crate.rect.collisionContainer.Count; i++)
+					{
+						RWCustom.IntVector2 temp = crate.rect.collisionContainer[i];
+						if (Vector2.Distance(new Vector2(temp.x * 20, temp.y * 20), self.pos) > rayRad)
+						{
+							//Debug.Log("removing");
+							crate.rect.collisionContainer.RemoveAt(i);
+							//Debug.Log("Finished removing");
+						}
+
+					}
+				}
+				// Only use this log for debugging!!! This lags a LOT!!!!!
+				/*
+				Debug.Log(crate.rect.collisionContainer.Count);
+				foreach (RWCustom.IntVector2 v in crate.rect.collisionContainer)
+                {
+					Debug.Log(v.ToString());
+                }
+				*/
 			}
 		}
 
@@ -84,7 +147,7 @@ namespace TestMod
 
 				// Used to know how far per pixel to Lerp from one Vector2 to the next when calculating number of points for collision detection.
 				// Smaller values are very likely to get laggy
-				float tileSize = 3;
+				float tileSize = 10;
 
 				if (self.vel.x > 0)
                 {
@@ -176,7 +239,7 @@ namespace TestMod
 
 				// Used to know how far per pixel to Lerp from one Vector2 to the next when calculating number of points for collision detection.
 				// Smaller values are very likely to get laggy
-				float tileSize = 3;
+				float tileSize = 10;
 
 				if (self.vel.y > 0)
                 {
@@ -373,7 +436,11 @@ namespace TestMod
 					//Debug.Log(tileCenter.y + " " + point.y);
 					offVec = new Vector2(offset, 0f);
 					//Debug.Log("Right" + offVec);
-					self.MoveFromOutsideMyUpdate(false, self.pos + offVec);
+					self.pos += offVec;
+					if (Mathf.Abs(self.vel.x) < 1f + 9f * (1f - self.owner.bounce))
+					{
+						self.vel.x = 0f;
+					}
 					rectangle.UpdateCornerPoints();
 					break;
 
@@ -385,7 +452,11 @@ namespace TestMod
 					//Debug.Log(tileCenter.y + " " + point.y);
 					offVec = new Vector2(offset, 0f);
 					//Debug.Log("Left" + offVec);
-					self.MoveFromOutsideMyUpdate(false, self.pos + offVec);
+					self.pos += offVec;
+					if (Mathf.Abs(self.vel.x) < 1f + 9f * (1f - self.owner.bounce))
+					{
+						self.vel.x = 0f;
+					}
 					rectangle.UpdateCornerPoints();
 					break;
 
@@ -397,7 +468,11 @@ namespace TestMod
 					//Debug.Log(tileCenter.y + " " + point.y);
 					offVec = new Vector2(0f, offset);
 					//Debug.Log("Up" + offVec);
-					self.MoveFromOutsideMyUpdate(false, self.pos + offVec);
+					self.pos += offVec;
+					if (Mathf.Abs(self.vel.y) < 1f + 9f * (1f - self.owner.bounce))
+					{
+						self.vel.y = 0f;
+					}
 					rectangle.UpdateCornerPoints();
 					break;
 
@@ -409,7 +484,11 @@ namespace TestMod
 					//Debug.Log(tileCenter.y + " " + point.y);
 					offVec = new Vector2(0f, offset);
 					//Debug.Log("Down" + offVec);
-					self.MoveFromOutsideMyUpdate(false, self.pos + offVec);
+					self.pos += offVec;
+					if (self.vel.y < self.owner.gravity || self.vel.y < 1f + 9f * (1f - self.owner.bounce))
+					{
+						self.vel.y = 0f;
+					}
 					rectangle.UpdateCornerPoints();
 					break;
 

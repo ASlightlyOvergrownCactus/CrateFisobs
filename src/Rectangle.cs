@@ -15,6 +15,7 @@ namespace TestMod
         public float width;
         public float height;
         public float angleDeg;
+        public List<RWCustom.IntVector2> collisionContainer; 
         private Vector2[] originalCorners;
 
         public Rectangle(UnityEngine.Vector2 center, float width, float height, Vector2[] origCorners)
@@ -26,6 +27,9 @@ namespace TestMod
             corners = new UnityEngine.Vector2[originalCorners.Length];
             UpdateCornerPointsWithAngle(0f);
             angleDeg = 0f;
+
+            collisionContainer = new List<RWCustom.IntVector2>();
+            collisionContainer.Add(new RWCustom.IntVector2(0, 0));
         }
 
         
@@ -48,7 +52,7 @@ namespace TestMod
             // Loop through each corner point
             for (int i = 0; i < corners.Length; i++)
             {
-                corners[i] = RWCustom.Custom.RotateAroundOrigo(corners[i], angleDeg);
+                corners[i] = RWCustom.Custom.RotateAroundOrigo(corners[i], 45f);
                 corners[i] += center;
             }
         }
@@ -65,7 +69,7 @@ namespace TestMod
             // Loop through each corner point
             for (int i = 0; i < corners.Length; i++)
             {
-                corners[i] = RWCustom.Custom.RotateAroundOrigo(corners[i], angleDeg);
+                corners[i] = RWCustom.Custom.RotateAroundOrigo(corners[i], 45f);
                 corners[i] += center;
             }
 

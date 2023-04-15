@@ -61,7 +61,7 @@ namespace TestMod
 
 
             airFriction = 0.999f;
-            gravity = 0.9f;
+            gravity = 0.7f;
             bounce = 0.3f;
             surfaceFriction = 1f;
             collisionLayer = 1;
@@ -74,7 +74,7 @@ namespace TestMod
             rotationOffset = Rand * 30 - 15;
             float width = rad * 2;
             float height = rad * 2;
-            Vector2[] origCorners = new Vector2[3];
+            Vector2[] origCorners = new Vector2[4];
 
             // Square
             
@@ -271,6 +271,9 @@ namespace TestMod
             
             for(int i = 0; i < bodyChunks.Length; i++)
                 sLeaser.sprites[i] = new FSprite("Circle20");
+
+            for (int i = bodyChunks.Length; i < bodyChunks.Length + rect.corners.Length; i++)
+                sLeaser.sprites[i] = new FSprite("Circle4");
 
             for (int i = bodyChunks.Length; i < bodyChunks.Length + rect.corners.Length; i++)
                 sLeaser.sprites[i] = new FSprite("Circle4");
