@@ -63,59 +63,270 @@ namespace TestMod
 			}
 
 		}
+
+		
+		// Structure that stores the results of the PolygonCollision function
+		public struct PolygonCollisionResult
+		{
+			// Are the polygons going to intersect forward in time?
+			public bool WillIntersect;
+			// Are the polygons currently intersecting?
+			public bool Intersect;
+			// The translation to apply to the first polygon to push the polygons apart.
+			public Vector MinimumTranslationVector;
+		}
+
+		// Calculate the projection of a polygon on an axis
+		// and returns it as a [min, max] interval
+		public void ProjectPolygon(Vector axis, Polygon polygon,
+						   ref float min, ref float max)
+		{
+			// To project a point on an axis use the dot product
+			float dotProduct = axis.DotProduct(new Vector(polygon.corners[0].x, polygon.corners[0].y));
+			min = dotProduct;
+			max = dotProduct;
+			for (int i = 0; i < polygon.corners.Length; i++)
+			{
+				dotProduct = new Vector(polygon.corners[0].x, polygon.corners[0].y).DotProduct(axis);
+				if (dotProduct < min)
+				{
+					min = dotProduct;
+				}
+				else
+				{
+					if (dotProduct > max)
+					{
+						max = dotProduct;
+					}
+				}
+			}
+		}
+
+		public void ProjectPolygonTile(Vector axis, TilePolygon tile,
+								   ref float min, ref float max)
+		{
+			// To project a point on an axis use the dot product
+			float dotProduct = axis.DotProduct(new Vector(tile.corners[0].x, tile.corners[0].y));
+			min = dotProduct;
+			max = dotProduct;
+			for (int i = 0; i < tile.corners.Length; i++)
+			{
+				dotProduct = new Vector(tile.corners[0].x, tile.corners[0].y).DotProduct(axis);
+				if (dotProduct < min)
+				{
+					min = dotProduct;
+				}
+				else
+				{
+					if (dotProduct > max)
+					{
+						max = dotProduct;
+					}
+				}
+			}
+		}
+
+		// Calculate the distance between [minA, maxA] and [minB, maxB]
+		// The distance will be negative if the intervals overlap
+		public float IntervalDistance(float minA, float maxA, float minB, float maxB)
+		{
+			if (minA < minB)
+			{
+				return minB - maxA;
+			}
+			else
+			{
+				return minA - maxB;
+			}
+		}
+
+		// Check if polygon A is going to collide with polygon B.
+		// The last parameter is the *relative* velocity 
+		// of the polygons (i.e. velocityA - velocityB)
+		public PolygonCollisionResult PolygonCollisionTile(Polygon polygonA,
+							  TilePolygon polygonB, Vector velocity)
+		{
+			PolygonCollisionResult result = new PolygonCollisionResult();
+			result.Intersect = true;
+			result.WillIntersect = true;
+
+			int edgeCountA = polygonA.Edges.Count;
+			int edgeCountB = polygonB.Edges.Count;
+			float minIntervalDistance = float.PositiveInfinity;
+			Vector translationAxis = new Vector();
+			Vector edge;
+
+			// Loop through all the edges of both polygons
+			for (int edgeIndex = 0; edgeIndex < edgeCountA + edgeCountB; edgeIndex++)
+			{
+				if (edgeIndex < edgeCountA)
+				{
+					edge = polygonA.Edges[edgeIndex];
+				}
+				else
+				{
+					edge = polygonB.Edges[edgeIndex - edgeCountA];
+				}
+
+				// ===== 1. Find if the polygons are currently intersecting =====
+
+				// Find the axis perpendicular to the current edge
+				Vector axis = new Vector(-edge.Y, edge.X);
+				axis.Normalize();
+
+				// Find the projection of the polygon on the current axis
+				float minA = 0; float minB = 0; float maxA = 0; float maxB = 0;
+				ProjectPolygon(axis, polygonA, ref minA, ref maxA);
+				ProjectPolygonTile(axis, polygonB, ref minB, ref maxB);
+
+				// Check if the polygon projections are currentlty intersecting
+				if (IntervalDistance(minA, maxA, minB, maxB) > 0)
+            result.Intersect = false;
+
+				// ===== 2. Now find if the polygons *will* intersect =====
+
+				// Project the velocity on the current axis
+				float velocityProjection = axis.DotProduct(velocity);
+
+				// Get the projection of polygon A during the movement
+				if (velocityProjection < 0)
+				{
+					minA += velocityProjection;
+				}
+				else
+				{
+					maxA += velocityProjection;
+				}
+
+				// Do the same test as above for the new projection
+				float intervalDistance = IntervalDistance(minA, maxA, minB, maxB);
+				if (intervalDistance > 0) result.WillIntersect = false;
+
+				// If the polygons are not intersecting and won't intersect, exit the loop
+				if (!result.Intersect && !result.WillIntersect) break;
+
+				// Check if the current interval distance is the minimum one. If so store
+				// the interval distance and the current distance.
+				// This will be used to calculate the minimum translation vector
+				intervalDistance = Math.Abs(intervalDistance);
+				if (intervalDistance < minIntervalDistance)
+				{
+					minIntervalDistance = intervalDistance;
+					translationAxis = axis;
+
+					Vector d = new Vector(polygonA.center.x, polygonA.center.y) - new Vector(polygonB.center.x, polygonB.center.y);
+					if (d.DotProduct(translationAxis) < 0)
+						translationAxis = -translationAxis;
+				}
+			}
+
+			// The minimum translation vector
+			// can be used to push the polygons appart.
+			if (result.WillIntersect)
+				result.MinimumTranslationVector = translationAxis * minIntervalDistance;
+
+			return result;
+		}
+
 		private void BodyChunk_Update(On.BodyChunk.orig_Update orig, BodyChunk self)
 		{
 			orig(self);
 			if (self.owner is Crate)
             {
-				//Debug.Log("Starting Ray Loop");
+				//Debug.Log("Starting tile initialization Loop");
 				var crate = self.owner as Crate;
-				// Raycaster
-				// Sets radius ray will go to
-				float rayRad = (self.rad * 2f) + 80f;
-				//Debug.Log(rayRad);
-				for (int degree = 1; degree <= 360; degree++)
+
+				float[] colRectDimensions = new float[4];
+
+				colRectDimensions[0] = crate.rect.corners[0].x; // X value for collision rect start point
+				colRectDimensions[1] = crate.rect.corners[0].y; // Y value for collision rect start point
+				colRectDimensions[2] = crate.rect.corners[0].x; // X value for collision rect X length
+				colRectDimensions[3] = crate.rect.corners[0].y; // Y value for collision rect Y length
+
+				// X value most left
+                for (int i = 0; i < crate.rect.corners.Length; i++)
                 {
-					// Rotates for rays on each degree around object
-					Vector2 ray = RWCustom.Custom.RotateAroundOrigo(Vector2.right, degree);
-					Vector2 rayDirection = ray;
-					ray += self.pos;
-
-					for (int pix = 1; pix <= rayRad; pix++)
+					if (crate.rect.corners[i].x < colRectDimensions[0])
                     {
-						ray += rayDirection;
+						colRectDimensions[0] = crate.rect.corners[i].x;
+                    }
+                }
 
-						RWCustom.IntVector2 tilePos = self.owner.room.GetTilePosition(ray);
-						if (self.owner.room.GetTile(tilePos.x + 2, tilePos.y + 3).Terrain == Room.Tile.TerrainType.Solid)
-                        {
+				// Y value most up
+				for (int i = 0; i < crate.rect.corners.Length; i++)
+				{
+					if (crate.rect.corners[i].y > colRectDimensions[1])
+					{
+						colRectDimensions[1] = crate.rect.corners[i].y;
+					}
+				}
+
+				// X value most right
+				for (int i = 0; i < crate.rect.corners.Length; i++)
+				{
+					if (crate.rect.corners[i].x > colRectDimensions[0])
+					{
+						colRectDimensions[2] = crate.rect.corners[i].x;
+					}
+				}
+
+				// Y value most down
+				for (int i = 0; i < crate.rect.corners.Length; i++)
+				{
+					if (crate.rect.corners[i].x < colRectDimensions[3])
+					{
+						colRectDimensions[3] = crate.rect.corners[i].x;
+					}
+				}
+
+				colRectDimensions[0] -= 40f;
+				colRectDimensions[1] += 40f;
+				colRectDimensions[2] += 40f;
+				colRectDimensions[3] -= 40f;
+
+				RWCustom.IntVector2 startPoint = self.owner.room.GetTilePosition(new Vector2(colRectDimensions[0], colRectDimensions[1]));
+				RWCustom.IntVector2 dimensions = self.owner.room.GetTilePosition(new Vector2(colRectDimensions[2] - colRectDimensions[0], colRectDimensions[1] - colRectDimensions[3]));
+				//Debug.Log(startPoint);
+				//Debug.Log(dimensions);
+
+
+				Rect collisionDetector = new(startPoint.x, startPoint.y, dimensions.x, dimensions.y);
+
+				for (int i = 0; i < collisionDetector.width; i++)
+                {
+					for (int a = 0; a < collisionDetector.height; a++)
+                    {
+						if (self.owner.room.GetTile(new RWCustom.IntVector2(i + (int)collisionDetector.x,(int)collisionDetector.y - a)).Terrain == Room.Tile.TerrainType.Solid)
+						{
 							bool flag = false;
 
-							foreach(RWCustom.IntVector2 v in crate.rect.collisionContainer)
-                            {
+							foreach (TilePolygon p in crate.rect.collisionContainer)
+							{
 								//Debug.Log("Got into tile check");
-								if (tilePos.x == v.x && tilePos.y == v.y)
-                                {
+								if (new RWCustom.IntVector2(i + (int)collisionDetector.x, a + (int)collisionDetector.y - a).ToVector2().x == p.center.x && new RWCustom.IntVector2(i + (int)collisionDetector.x, (int)collisionDetector.y - a).ToVector2().y == p.center.y)
+								{
 									//Debug.Log("Matching Tile");
 									flag = true;
 									break;
-                                }
-                            }
+								}
+							}
 							if (!flag)
 							{
 								//Debug.Log("Tile added to list");
-								crate.rect.collisionContainer.Add(tilePos);
+								crate.rect.collisionContainer.Add(new TilePolygon(new RWCustom.IntVector2(i + (int)collisionDetector.x, (int)collisionDetector.y - a).ToVector2()));
 							}
 						}
 					}
-					
-				}
+                }
+
 				//Debug.Log("Reached removal");
 				if (crate.rect.collisionContainer.Count > 0)
 				{
 					for (int i = 0; i < crate.rect.collisionContainer.Count; i++)
 					{
-						RWCustom.IntVector2 temp = crate.rect.collisionContainer[i];
-						if (Vector2.Distance(new Vector2(temp.x * 20, temp.y * 20), self.pos) > rayRad)
+						TilePolygon temp = crate.rect.collisionContainer[i];
+						Vector2 check = temp.center / 20f;
+						if (!collisionDetector.Contains(check))
 						{
 							//Debug.Log("removing");
 							crate.rect.collisionContainer.RemoveAt(i);
@@ -126,10 +337,11 @@ namespace TestMod
 				}
 				// Only use this log for debugging!!! This lags a LOT!!!!!
 				/*
+				Debug.Log(crate.rect.center / 20f);
 				Debug.Log(crate.rect.collisionContainer.Count);
-				foreach (RWCustom.IntVector2 v in crate.rect.collisionContainer)
+				foreach (TilePolygon p in crate.rect.collisionContainer)
                 {
-					Debug.Log(v.ToString());
+					Debug.Log("X: " + p.center.x + "   Y: " + p.center.y);
                 }
 				*/
 			}
@@ -141,6 +353,22 @@ namespace TestMod
 			if (self.owner is Crate)
 			{
 				var crate = self.owner as Crate;
+
+				for (int i = 0; i < crate.rect.collisionContainer.Count; i++)
+				{
+					PolygonCollisionResult polygonCollisionResult = PolygonCollisionTile(crate.rect, crate.rect.collisionContainer[i], new Vector(self.vel.x, self.vel.y));
+
+					if (polygonCollisionResult.Intersect)
+					{
+						Debug.Log("Currently Colliding!!!");
+					}
+					else if (polygonCollisionResult.WillIntersect)
+					{
+						Debug.Log("Will Collide!!!");
+					}
+				}
+			
+
 				int x = 0;
 				//Debug.Log("Running Crate Collision (Horizontal)");
 				//self.contactPoint.x = 0;
@@ -233,6 +461,21 @@ namespace TestMod
 			if (self.owner is Crate)
 			{
 				var crate = self.owner as Crate;
+
+				for (int i = 0; i < crate.rect.collisionContainer.Count; i++)
+				{
+					PolygonCollisionResult polygonCollisionResult = PolygonCollisionTile(crate.rect, crate.rect.collisionContainer[i], new Vector(self.vel.x, self.vel.y));
+
+					if (polygonCollisionResult.Intersect)
+					{
+						Debug.Log("Currently Colliding!!!");
+					}
+					else if (polygonCollisionResult.WillIntersect)
+					{
+						Debug.Log("Will Collide!!!");
+					}
+				}
+				
 				int x = 0;
 				//Debug.Log("Running Crate Collision (Horizontal)");
 				//self.contactPoint.x = 0;
@@ -320,7 +563,7 @@ namespace TestMod
 		}
 
 		// Checks for collision between point provided and rectangle
-		public bool CheckTileCollision(Vector2 pointToCheck, BodyChunk self, Rectangle rectangle, int direction)
+		public bool CheckTileCollision(Vector2 pointToCheck, BodyChunk self, Polygon rectangle, int direction)
 		{
 
 			RWCustom.IntVector2 tilePos = self.owner.room.GetTilePosition(pointToCheck);
@@ -406,7 +649,7 @@ namespace TestMod
 			return false;
 		}
 
-		private Rectangle HandleCollisionResponse(Rectangle rectangle, Vector2 surfaceNormal, BodyChunk self, int collisionDirection, Vector2 point)
+		private Polygon HandleCollisionResponse(Polygon rectangle, Vector2 surfaceNormal, BodyChunk self, int collisionDirection, Vector2 point)
 		{
 			float offset;
 			Vector2 offVec;

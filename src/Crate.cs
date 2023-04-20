@@ -13,7 +13,7 @@ namespace TestMod
         public float lastRotation;
         public float rotVel;
         public float darkness;
-        public Rectangle rect;
+        public Polygon rect;
         public float rad;
         private readonly float rotationOffset;
 
@@ -79,9 +79,9 @@ namespace TestMod
             // Square
             
             origCorners[0] = new UnityEngine.Vector2(-width / 2f, -height / 2f); // Bottom Left
-            origCorners[1] = new UnityEngine.Vector2(width / 2f, -height / 2f); // Bottom Right
-            origCorners[2] = new UnityEngine.Vector2(-width / 2f, height / 2f); // Top Right
-            origCorners[3] = new UnityEngine.Vector2(width / 2f, height / 2f); // Top Left
+            origCorners[1] = new UnityEngine.Vector2(-width / 2f, height / 2f); // Top Left
+            origCorners[2] = new UnityEngine.Vector2(width / 2f, height / 2f); // Top Right
+            origCorners[3] = new UnityEngine.Vector2(width / 2f, -height / 2f); // Bottom Right
 
             // Triangle needs some work with the allingement, but custom shapes work!
             // Triangle
@@ -92,7 +92,7 @@ namespace TestMod
             */
 
             Debug.Log("Loading Crate BodyChunk ctor!");
-            rect = new Rectangle(this.bodyChunks[0].pos, rad * 2, rad * 2, origCorners);
+            rect = new Polygon(this.bodyChunks[0].pos, rad * 2, rad * 2, origCorners);
 
         }
 
