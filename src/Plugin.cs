@@ -73,157 +73,82 @@ namespace TestMod
 			// Are the polygons currently intersecting?
 			public bool Intersect;
 			// The translation to apply to the first polygon to push the polygons apart.
-			public Vector MinimumTranslationVector;
+			public Vector2 MinimumTranslationVector;
+
+			public Vector2 collisionTile;
 		}
 
-		// Calculate the projection of a polygon on an axis
-		// and returns it as a [min, max] interval
-		public void ProjectPolygon(Vector axis, Polygon polygon,
-						   ref float min, ref float max)
-		{
-			// To project a point on an axis use the dot product
-			float dotProduct = axis.DotProduct(new Vector(polygon.corners[0].x, polygon.corners[0].y));
-			min = dotProduct;
-			max = dotProduct;
-			for (int i = 0; i < polygon.corners.Length; i++)
-			{
-				dotProduct = new Vector(polygon.corners[0].x, polygon.corners[0].y).DotProduct(axis);
-				if (dotProduct < min)
-				{
-					min = dotProduct;
-				}
-				else
-				{
-					if (dotProduct > max)
-					{
-						max = dotProduct;
-					}
-				}
-			}
-		}
 
-		public void ProjectPolygonTile(Vector axis, TilePolygon tile,
-								   ref float min, ref float max)
-		{
-			// To project a point on an axis use the dot product
-			float dotProduct = axis.DotProduct(new Vector(tile.corners[0].x, tile.corners[0].y));
-			min = dotProduct;
-			max = dotProduct;
-			for (int i = 0; i < tile.corners.Length; i++)
-			{
-				dotProduct = new Vector(tile.corners[0].x, tile.corners[0].y).DotProduct(axis);
-				if (dotProduct < min)
-				{
-					min = dotProduct;
-				}
-				else
-				{
-					if (dotProduct > max)
-					{
-						max = dotProduct;
-					}
-				}
-			}
-		}
 
-		// Calculate the distance between [minA, maxA] and [minB, maxB]
-		// The distance will be negative if the intervals overlap
-		public float IntervalDistance(float minA, float maxA, float minB, float maxB)
-		{
-			if (minA < minB)
-			{
-				return minB - maxA;
-			}
-			else
-			{
-				return minA - maxB;
-			}
-		}
-
-		// Check if polygon A is going to collide with polygon B.
-		// The last parameter is the *relative* velocity 
-		// of the polygons (i.e. velocityA - velocityB)
+		// Uses DIAGONAL method of collision detection
 		public PolygonCollisionResult PolygonCollisionTile(Polygon polygonA,
-							  TilePolygon polygonB, Vector velocity)
+							  TilePolygon polygonTile, Vector2 velocity)
 		{
 			PolygonCollisionResult result = new PolygonCollisionResult();
-			result.Intersect = true;
-			result.WillIntersect = true;
+			Polygon poly1 = polygonA;
+			TilePolygon polyTile = polygonTile;
+			
+			for (int shape = 0; shape < 2; shape++)
+            {
+				if (shape == 1)
+                {
+					// Check diagonals of polygon...
+					for (int p = 0; p < poly1.corners.Length; p++)
+                    {
+						Vector2 line_r1s = poly1.center;
+						Vector2 line_r1e = poly1.corners[p];
 
-			int edgeCountA = polygonA.Edges.Count;
-			int edgeCountB = polygonB.Edges.Count;
-			float minIntervalDistance = float.PositiveInfinity;
-			Vector translationAxis = new Vector();
-			Vector edge;
 
-			// Loop through all the edges of both polygons
-			for (int edgeIndex = 0; edgeIndex < edgeCountA + edgeCountB; edgeIndex++)
-			{
-				if (edgeIndex < edgeCountA)
-				{
-					edge = polygonA.Edges[edgeIndex];
+						// ... against edges of other polygon
+						for (int q = 0; q < polyTile.corners.Length; q++)
+                        {
+							Vector2 line_r2s = polyTile.corners[q];
+							Vector2 line_r2e = polyTile.corners[(q + 1) % polyTile.corners.Length];
+
+							// Standard line segment intersection (i dinked)
+							float h = (line_r2e.x - line_r2s.x) * (line_r1s.y - line_r1e.y) - (line_r1s.x - line_r1e.x) * (line_r2e.y - line_r2s.y);
+							float t1 = ((line_r2s.y - line_r2e.y) * (line_r1s.x - line_r2s.x) + (line_r2s.x - line_r2s.x) * (line_r1s.y - line_r2s.y)) / h;
+							float t2 = ((line_r1s.y - line_r1e.y) * (line_r1s.x - line_r2s.x) + (line_r1e.x - line_r1s.x) * (line_r1s.y - line_r2s.y)) / h;
+
+							if (t1 >= 0.0f && t1 < 1.0f && t2 >= 0.0f && t2 < 1.0f)
+                            {
+								result.Intersect = true;
+								result.collisionTile = polyTile.center;
+								return result;
+							}
+                        }
+                    }
+                }
+				else if (shape == 2)
+                {
+					// Check diagonals of polygon...
+					for (int p = 0; p < polyTile.corners.Length; p++)
+					{
+						Vector2 line_r1s = polyTile.center;
+						Vector2 line_r1e = polyTile.corners[p];
+
+
+						// ... against edges of other polygon
+						for (int q = 0; q < poly1.corners.Length; q++)
+						{
+							Vector2 line_r2s = poly1.corners[q];
+							Vector2 line_r2e = poly1.corners[(q + 1) % poly1.corners.Length];
+
+							// Standard line segment intersection (i dinked)
+							float h = (line_r2e.x - line_r2s.x) * (line_r1s.y - line_r1e.y) - (line_r1s.x - line_r1e.x) * (line_r2e.y - line_r2s.y);
+							float t1 = ((line_r2s.y - line_r2e.y) * (line_r1s.x - line_r2s.x) + (line_r2s.x - line_r2s.x) * (line_r1s.y - line_r2s.y)) / h;
+							float t2 = ((line_r1s.y - line_r1e.y) * (line_r1s.x - line_r2s.x) + (line_r1e.x - line_r1s.x) * (line_r1s.y - line_r2s.y)) / h;
+
+							if (t1 >= 0.0f && t1 < 1.0f && t2 >= 0.0f && t2 < 1.0f)
+							{
+								result.Intersect = true;
+								result.collisionTile = polyTile.center;
+								return result;
+							}
+						}
+					}
 				}
-				else
-				{
-					edge = polygonB.Edges[edgeIndex - edgeCountA];
-				}
-
-				// ===== 1. Find if the polygons are currently intersecting =====
-
-				// Find the axis perpendicular to the current edge
-				Vector axis = new Vector(-edge.Y, edge.X);
-				axis.Normalize();
-
-				// Find the projection of the polygon on the current axis
-				float minA = 0; float minB = 0; float maxA = 0; float maxB = 0;
-				ProjectPolygon(axis, polygonA, ref minA, ref maxA);
-				ProjectPolygonTile(axis, polygonB, ref minB, ref maxB);
-
-				// Check if the polygon projections are currentlty intersecting
-				if (IntervalDistance(minA, maxA, minB, maxB) > 0)
-            result.Intersect = false;
-
-				// ===== 2. Now find if the polygons *will* intersect =====
-
-				// Project the velocity on the current axis
-				float velocityProjection = axis.DotProduct(velocity);
-
-				// Get the projection of polygon A during the movement
-				if (velocityProjection < 0)
-				{
-					minA += velocityProjection;
-				}
-				else
-				{
-					maxA += velocityProjection;
-				}
-
-				// Do the same test as above for the new projection
-				float intervalDistance = IntervalDistance(minA, maxA, minB, maxB);
-				if (intervalDistance > 0) result.WillIntersect = false;
-
-				// If the polygons are not intersecting and won't intersect, exit the loop
-				if (!result.Intersect && !result.WillIntersect) break;
-
-				// Check if the current interval distance is the minimum one. If so store
-				// the interval distance and the current distance.
-				// This will be used to calculate the minimum translation vector
-				intervalDistance = Math.Abs(intervalDistance);
-				if (intervalDistance < minIntervalDistance)
-				{
-					minIntervalDistance = intervalDistance;
-					translationAxis = axis;
-
-					Vector d = new Vector(polygonA.center.x, polygonA.center.y) - new Vector(polygonB.center.x, polygonB.center.y);
-					if (d.DotProduct(translationAxis) < 0)
-						translationAxis = -translationAxis;
-				}
-			}
-
-			// The minimum translation vector
-			// can be used to push the polygons appart.
-			if (result.WillIntersect)
-				result.MinimumTranslationVector = translationAxis * minIntervalDistance;
+            }
 
 			return result;
 		}
@@ -313,7 +238,7 @@ namespace TestMod
 							if (!flag)
 							{
 								//Debug.Log("Tile added to list");
-								crate.rect.collisionContainer.Add(new TilePolygon(new RWCustom.IntVector2(i + (int)collisionDetector.x, (int)collisionDetector.y - a).ToVector2()));
+								crate.rect.collisionContainer.Add(new TilePolygon(new Vector2((i + collisionDetector.x) * 20f, (collisionDetector.y - a) * 20f)));
 							}
 						}
 					}
@@ -356,11 +281,11 @@ namespace TestMod
 
 				for (int i = 0; i < crate.rect.collisionContainer.Count; i++)
 				{
-					PolygonCollisionResult polygonCollisionResult = PolygonCollisionTile(crate.rect, crate.rect.collisionContainer[i], new Vector(self.vel.x, self.vel.y));
+					PolygonCollisionResult polygonCollisionResult = PolygonCollisionTile(crate.rect, crate.rect.collisionContainer[i], self.vel);
 
 					if (polygonCollisionResult.Intersect)
 					{
-						Debug.Log("Currently Colliding!!!");
+						//Debug.Log("Currently Colliding!!! With " + polygonCollisionResult.collisionTile);
 					}
 					else if (polygonCollisionResult.WillIntersect)
 					{
@@ -464,11 +389,11 @@ namespace TestMod
 
 				for (int i = 0; i < crate.rect.collisionContainer.Count; i++)
 				{
-					PolygonCollisionResult polygonCollisionResult = PolygonCollisionTile(crate.rect, crate.rect.collisionContainer[i], new Vector(self.vel.x, self.vel.y));
+					PolygonCollisionResult polygonCollisionResult = PolygonCollisionTile(crate.rect, crate.rect.collisionContainer[i], self.vel);
 
 					if (polygonCollisionResult.Intersect)
 					{
-						Debug.Log("Currently Colliding!!!");
+						//Debug.Log("Currently Colliding!!! With " + polygonCollisionResult.collisionTile);
 					}
 					else if (polygonCollisionResult.WillIntersect)
 					{

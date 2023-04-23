@@ -12,7 +12,7 @@ namespace TestMod
     {
         public UnityEngine.Vector2 center;
         public UnityEngine.Vector2[] corners;
-        private List<Vector> edges = new List<Vector>();
+        private List<Vector2> edges = new List<Vector2>();
         public float width;
         public float height;
         public float angleDeg;
@@ -26,7 +26,7 @@ namespace TestMod
             this.height = height;
             originalCorners = origCorners;
             corners = new UnityEngine.Vector2[originalCorners.Length];
-            edges = new List<Vector>();
+            edges = new List<Vector2>();
             UpdateCornerPointsWithAngle(0f);
             angleDeg = 0f;
             Debug.Log("Adding actual polygon list!");
@@ -83,25 +83,25 @@ namespace TestMod
 
         public void BuildEdges()
         {
-            Vector p1;
-            Vector p2;
+            Vector2 p1;
+            Vector2 p2;
             Edges.Clear();
             for (int i = 0; i < corners.Length; i++)
             {
-                p1 = new Vector(corners[i].x, corners[i].y);
+                p1 = new Vector2(corners[i].x, corners[i].y);
                 if (i + 1 >= corners.Length)
                 {
-                    p2 = new Vector(corners[0].x, corners[0].y);
+                    p2 = new Vector2(corners[0].x, corners[0].y);
                 }
                 else
                 {
-                    p2 = new Vector(corners[i + 1].x, corners[i + 1].y);
+                    p2 = new Vector2(corners[i + 1].x, corners[i + 1].y);
                 }
                 edges.Add(p2 - p1);
             }
         }
 
-        public List<Vector> Edges
+        public List<Vector2> Edges
         {
             get { return edges; }
         }
