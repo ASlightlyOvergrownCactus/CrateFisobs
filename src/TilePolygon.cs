@@ -8,7 +8,7 @@ using RWCustom;
 
 namespace TestMod
 {
-    class TilePolygon
+    class TilePolygon : UpdatableAndDeletable, IDrawable
     {
         public UnityEngine.Vector2 center;
         public UnityEngine.Vector2[] corners;
@@ -47,6 +47,51 @@ namespace TestMod
                 edges.Add(p2 - p1);
             }
         }
+
+        public void InitiateSprites(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
+        {
+            sLeaser.sprites = new FSprite[corners.Length];
+
+            for (int i = 0; i < corners.Length; i++)
+                sLeaser.sprites[i] = new FSprite("Circle4");
+
+            AddToContainer(sLeaser, rCam, null);
+        }
+
+        public void DrawSprites(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
+        {
+            for (int i = 0; i < corners.Length; i++)
+            {
+                var spr = sLeaser.sprites[i];
+                spr.SetPosition((corners[i]) - camPos);
+                spr.scale = 10f;
+            }
+
+            if (slatedForDeletetion || room != rCam.room)
+                sLeaser.CleanSpritesAndRemove();
+
+            for (int i = 0; i < corners.Length; i++)
+            {
+                sLeaser.sprites[i].color = Color.blue;
+            }
+
+
+        }
+
+        public void ApplyPalette(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, RoomPalette palette)
+        {
+            foreach (var sprite in sLeaser.sprites)
+                sprite.color = palette.blackColor;
+        }
+
+        public void AddToContainer(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, FContainer? newContainer)
+        {
+            newContainer ??= rCam.ReturnFContainer("Items");
+
+            foreach (FSprite fsprite in sLeaser.sprites)
+                newContainer.AddChild(fsprite);
+        }
+
         public List<Vector2> Edges
         {
             get { return edges; }

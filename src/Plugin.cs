@@ -74,8 +74,10 @@ namespace TestMod
 			public bool Intersect;
 			// The translation to apply to the first polygon to push the polygons apart.
 			public Vector2 MinimumTranslationVector;
-
+			// Contains the tile collided with (i dinked)
 			public Vector2 collisionTile;
+			// Contains the number that corresponds to the side collided.
+			public int collidedSide;
 		}
 
 
@@ -88,7 +90,7 @@ namespace TestMod
 			Polygon poly1 = polygonA;
 			TilePolygon polyTile = polygonTile;
 			
-			for (int shape = 0; shape < 2; shape++)
+			for (int shape = 1; shape <= 2; shape++)
             {
 				if (shape == 1)
                 {
@@ -114,6 +116,7 @@ namespace TestMod
                             {
 								result.Intersect = true;
 								result.collisionTile = polyTile.center;
+								result.collidedSide = q;
 								return result;
 							}
                         }
@@ -228,7 +231,7 @@ namespace TestMod
 							foreach (TilePolygon p in crate.rect.collisionContainer)
 							{
 								//Debug.Log("Got into tile check");
-								if (new RWCustom.IntVector2(i + (int)collisionDetector.x, a + (int)collisionDetector.y - a).ToVector2().x == p.center.x && new RWCustom.IntVector2(i + (int)collisionDetector.x, (int)collisionDetector.y - a).ToVector2().y == p.center.y)
+								if (new RWCustom.IntVector2(i + (int)collisionDetector.x, (int)collisionDetector.y - a).ToVector2().x == p.center.x && new RWCustom.IntVector2(i + (int)collisionDetector.x, (int)collisionDetector.y - a).ToVector2().y == p.center.y)
 								{
 									//Debug.Log("Matching Tile");
 									flag = true;
@@ -292,7 +295,7 @@ namespace TestMod
 						Debug.Log("Will Collide!!!");
 					}
 				}
-			
+			/*
 
 				int x = 0;
 				//Debug.Log("Running Crate Collision (Horizontal)");
@@ -372,7 +375,7 @@ namespace TestMod
 
 				rotationInDegrees = rotation.ToEulerAngles().z;
 				rotationInDegrees %= 360;
-				crate.rect.center = position;
+				crate.rect.center = position;*/
 			}
 			else
 			{
@@ -393,14 +396,31 @@ namespace TestMod
 
 					if (polygonCollisionResult.Intersect)
 					{
-						//Debug.Log("Currently Colliding!!! With " + polygonCollisionResult.collisionTile);
+						Debug.Log("Currently Colliding!!! With " + polygonCollisionResult.collisionTile);
+						self.pos = self.lastPos;
+						if (polygonCollisionResult.collidedSide == 0)
+                        {
+							Debug.Log("Left collide tile");
+                        }
+						else if (polygonCollisionResult.collidedSide == 1)
+						{
+							Debug.Log("Up collide tile");
+						}
+						else if (polygonCollisionResult.collidedSide == 2)
+						{
+							Debug.Log("Right collide tile");
+						}
+						else if (polygonCollisionResult.collidedSide == 3)
+						{
+							Debug.Log("Down collide tile");
+						}
 					}
 					else if (polygonCollisionResult.WillIntersect)
 					{
 						Debug.Log("Will Collide!!!");
 					}
 				}
-				
+				/*
 				int x = 0;
 				//Debug.Log("Running Crate Collision (Horizontal)");
 				//self.contactPoint.x = 0;
@@ -479,7 +499,7 @@ namespace TestMod
 
 				rotationInDegrees = rotation.ToEulerAngles().z;
 				rotationInDegrees %= 360;
-				crate.rect.center = position;
+				crate.rect.center = position;*/
 			}
 			else
 			{
