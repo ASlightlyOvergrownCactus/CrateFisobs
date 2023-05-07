@@ -8,7 +8,7 @@ namespace TestMod
     {
         private static float Rand => UnityEngine.Random.value;
 
-        public float lastDarkness = -1f;
+        public float lastDarkness = -2f;
         public float rotation;
         public float lastRotation;
         public float rotVel;
