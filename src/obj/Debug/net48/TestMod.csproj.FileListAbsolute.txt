@@ -72,3 +72,12 @@ C:\Users\Owner\Desktop\Rain World Modding\TestMods\Crate-Fisobs-MainFolder\Crate
 C:\Users\Owner\Desktop\Rain World Modding\TestMods\Crate-Fisobs-MainFolder\CrateFisobs\src\obj\Debug\net48\TestMod.dll
 C:\Users\Owner\Desktop\Rain World Modding\TestMods\Crate-Fisobs-MainFolder\CrateFisobs\src\obj\Debug\net48\TestMod.pdb
 C:\Users\Owner\Desktop\Rain World Modding\TestMods\Crate-Fisobs-MainFolder\CrateFisobs\src\obj\Debug\net48\TestMod.csproj.AssemblyReference.cache
+C:\Users\johns\OneDrive\Documents\GitHub\CrateFisobs\Cube_phsyics_Mod\Plugins\Debug\net48\TestMod.dll
+C:\Users\johns\OneDrive\Documents\GitHub\CrateFisobs\Cube_phsyics_Mod\Plugins\Debug\net48\TestMod.pdb
+C:\Users\johns\OneDrive\Documents\GitHub\CrateFisobs\src\obj\Debug\net48\TestMod.csproj.AssemblyReference.cache
+C:\Users\johns\OneDrive\Documents\GitHub\CrateFisobs\src\obj\Debug\net48\TestMod.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\johns\OneDrive\Documents\GitHub\CrateFisobs\src\obj\Debug\net48\TestMod.AssemblyInfoInputs.cache
+C:\Users\johns\OneDrive\Documents\GitHub\CrateFisobs\src\obj\Debug\net48\TestMod.AssemblyInfo.cs
+C:\Users\johns\OneDrive\Documents\GitHub\CrateFisobs\src\obj\Debug\net48\TestMod.csproj.CoreCompileInputs.cache
+C:\Users\johns\OneDrive\Documents\GitHub\CrateFisobs\src\obj\Debug\net48\TestMod.dll
+C:\Users\johns\OneDrive\Documents\GitHub\CrateFisobs\src\obj\Debug\net48\TestMod.pdb

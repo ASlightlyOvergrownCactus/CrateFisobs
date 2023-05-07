@@ -31,6 +31,8 @@ namespace TestMod
 	{
 		public Vector2 pivot;
 		public float rotationInDegrees;
+
+		public static bool DEBUGMODE = true;
 		public void OnEnable()
 		{
 			// How to make a hook:
@@ -114,18 +116,30 @@ namespace TestMod
 							Vector2 line_r2s = polyTile.corners[q];
 							Vector2 line_r2e = polyTile.corners[(q + 1) % polyTile.corners.Length];
 
-							// Standard line segment intersection (i dinked)
-							float h = (line_r2e.x - line_r2s.x) * (line_r1s.y - line_r1e.y) - (line_r1s.x - line_r1e.x) * (line_r2e.y - line_r2s.y);
-							float t1 = ((line_r2s.y - line_r2e.y) * (line_r1s.x - line_r2s.x) + (line_r2s.x - line_r2s.x) * (line_r1s.y - line_r2s.y)) / h;
-							float t2 = ((line_r1s.y - line_r1e.y) * (line_r1s.x - line_r2s.x) + (line_r1e.x - line_r1s.x) * (line_r1s.y - line_r2s.y)) / h;
+							//Find two line intersect then filter out with AABB check :)
 
-							if (t1 >= 0.0f && t1 < 1.0f && t2 >= 0.0f && t2 < 1.0f)
-                            {
-								result.Intersect = true;
-								result.collisionTile = polyTile.center;
-								result.collidedSide = q;
-								return result;
-							}
+
+
+
+
+
+
+
+
+							//i cant make this work :(
+
+							//// Standard line segment intersection (i dinked)
+							//float h = (line_r2e.x - line_r2s.x) * (line_r1s.y - line_r1e.y) - (line_r1s.x - line_r1e.x) * (line_r2e.y - line_r2s.y);
+							//float t1 = ((line_r2s.y - line_r2e.y) * (line_r1s.x - line_r2s.x) + (line_r2s.x - line_r2s.x) * (line_r1s.y - line_r2s.y)) / h;
+							//float t2 = ((line_r1s.y - line_r1e.y) * (line_r1s.x - line_r2s.x) + (line_r1e.x - line_r1s.x) * (line_r1s.y - line_r2s.y)) / h;
+
+							//if (t1 >= 0.0f && t1 < 1.0f && t2 >= 0.0f && t2 < 1.0f)
+       //                     {
+							//	result.Intersect = true;
+							//	result.collisionTile = polyTile.center;
+							//	result.collidedSide = q;
+							//	return result;
+							//}
                         }
                     }
                 }
@@ -138,26 +152,32 @@ namespace TestMod
 						Vector2 line_r1e = polyTile.corners[p];
 
 
-						// ... against edges of other polygon
-						for (int q = 0; q < poly1.corners.Length; q++)
-						{
-							Vector2 line_r2s = poly1.corners[q];
-							Vector2 line_r2e = poly1.corners[(q + 1) % poly1.corners.Length];
+                        //Find two line intersect then filter out with AABB check :)
 
-							// Standard line segment intersection (i dinked)
-							float h = (line_r2e.x - line_r2s.x) * (line_r1s.y - line_r1e.y) - (line_r1s.x - line_r1e.x) * (line_r2e.y - line_r2s.y);
-							float t1 = ((line_r2s.y - line_r2e.y) * (line_r1s.x - line_r2s.x) + (line_r2s.x - line_r2s.x) * (line_r1s.y - line_r2s.y)) / h;
-							float t2 = ((line_r1s.y - line_r1e.y) * (line_r1s.x - line_r2s.x) + (line_r1e.x - line_r1s.x) * (line_r1s.y - line_r2s.y)) / h;
 
-							if (t1 >= 0.0f && t1 < 1.0f && t2 >= 0.0f && t2 < 1.0f)
-							{
-								result.Intersect = true;
-								result.collisionTile = polyTile.center;
-								return result;
-							}
-						}
-					}
-				}
+
+
+
+
+
+
+
+                        //i cant make this work :(
+
+                        //// Standard line segment intersection (i dinked)
+                        //float h = (line_r2e.x - line_r2s.x) * (line_r1s.y - line_r1e.y) - (line_r1s.x - line_r1e.x) * (line_r2e.y - line_r2s.y);
+                        //float t1 = ((line_r2s.y - line_r2e.y) * (line_r1s.x - line_r2s.x) + (line_r2s.x - line_r2s.x) * (line_r1s.y - line_r2s.y)) / h;
+                        //float t2 = ((line_r1s.y - line_r1e.y) * (line_r1s.x - line_r2s.x) + (line_r1e.x - line_r1s.x) * (line_r1s.y - line_r2s.y)) / h;
+
+                        //if (t1 >= 0.0f && t1 < 1.0f && t2 >= 0.0f && t2 < 1.0f)
+                        //                     {
+                        //	result.Intersect = true;
+                        //	result.collisionTile = polyTile.center;
+                        //	result.collidedSide = q;
+                        //	return result;
+                        //}
+                    }
+                }
             }
 
 			return result;
