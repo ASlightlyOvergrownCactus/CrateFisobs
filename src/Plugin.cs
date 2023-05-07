@@ -81,10 +81,10 @@ namespace TestMod
 			// Contains the number that corresponds to the side collided.
 			public int collidedSide;
 
-			public Vector2 line1a;
-			public Vector2 line1b;
-			public Vector2 line2a;
-			public Vector2 line2b;
+			public Vector2[] line1;
+			
+			public Vector2[] line2;
+			
 
 			public Vector2 CollisionPos;
         }
@@ -99,6 +99,7 @@ namespace TestMod
 			Polygon poly1 = polygonA;
 			TilePolygon polyTile = polygonTile;
 			
+			//can swap the checking if polygon and tilepoly is same class(saves a lot of code) :{}
 			for (int shape = 1; shape <= 2; shape++)
             {
 				if (shape == 1)
@@ -116,7 +117,102 @@ namespace TestMod
 							Vector2 line_r2s = polyTile.corners[q];
 							Vector2 line_r2e = polyTile.corners[(q + 1) % polyTile.corners.Length];
 
-							//Find two line intersect then filter out with AABB check :)
+							//Find two line intersect then filter out with AABB check :{}
+
+							float x1 = line_r1s.x;
+							float x2 = line_r1e.x;
+
+							float y1 = line_r1s.y;
+							float y2 = line_r1e.y;
+
+							float x3 = line_r1s.x;
+							float x4 = line_r1e.x;
+
+							float y3 = line_r1s.y;
+							float y4 = line_r1e.y;
+
+							float d = (x1-x2)*(y3-y4) - (y1-y2)*(x3-x4);
+
+							float px = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4))/d;
+							float py = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / d;
+							Vector2 CollisionPoint = new Vector2(px, py);
+							if(Helper.AABB(line_r1s,line_r1e,line_r2s,line_r2e,CollisionPoint))
+							{
+								result.Intersect = true;
+								result.collisionTile = polyTile.center;
+								result.collidedSide = p;
+
+								result.line1 = new Vector2[2] { line_r1s, line_r1e };
+								result.line2=new Vector2[2] {line_r1s,line_r2e };
+								result.CollisionPos = new Vector2(px, py);
+								return result;
+							}
+
+
+
+
+
+
+                            //i cant make this work :{}
+
+                            //// Standard line segment intersection (i dinked)
+                            //float h = (line_r2e.x - line_r2s.x) * (line_r1s.y - line_r1e.y) - (line_r1s.x - line_r1e.x) * (line_r2e.y - line_r2s.y);
+                            //float t1 = ((line_r2s.y - line_r2e.y) * (line_r1s.x - line_r2s.x) + (line_r2s.x - line_r2s.x) * (line_r1s.y - line_r2s.y)) / h;
+                            //float t2 = ((line_r1s.y - line_r1e.y) * (line_r1s.x - line_r2s.x) + (line_r1e.x - line_r1s.x) * (line_r1s.y - line_r2s.y)) / h;
+
+                            //if (t1 >= 0.0f && t1 < 1.0f && t2 >= 0.0f && t2 < 1.0f)
+                            //                     {
+                            //	result.Intersect = true;
+                            //	result.collisionTile = polyTile.center;
+                            //	result.collidedSide = q;
+                            //	return result;
+                            //}
+                        }
+                    }
+                }
+				else if (shape == 2)
+                {
+					// Check diagonals of polygon...
+					for (int p = 0; p < polyTile.corners.Length; p++)
+					{
+						Vector2 line_r1s = polyTile.center;
+						Vector2 line_r1e = polyTile.corners[p];
+
+						for (int q = 0; q < poly1.corners.Length; q++)
+						{
+                            Vector2 line_r2s = poly1.corners[q];
+                            Vector2 line_r2e = poly1.corners[(q + 1) % poly1.corners.Length];
+                            //Find two line intersect then filter out with AABB check :)
+
+
+                            float x1 = line_r1s.x;
+							float x2 = line_r1e.x;
+
+							float y1 = line_r1s.y;
+							float y2 = line_r1e.y;
+
+							float x3 = line_r1s.x;
+							float x4 = line_r1e.x;
+
+							float y3 = line_r1s.y;
+							float y4 = line_r1e.y;
+
+							float d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+
+							float px = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / d;
+							float py = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / d;
+							Vector2 CollisionPoint = new Vector2(px, py);
+							if (Helper.AABB(line_r1s, line_r1e, line_r2s, line_r2e, CollisionPoint))
+							{
+								result.Intersect = true;
+								result.collisionTile = polyTile.center;
+								result.collidedSide = p;
+
+								result.line1 = new Vector2[2] { line_r1s, line_r1e };
+								result.line2 = new Vector2[2] { line_r1s, line_r2e };
+								result.CollisionPos = new Vector2(px, py);
+								return result;
+							}
 
 
 
@@ -134,48 +230,13 @@ namespace TestMod
 							//float t2 = ((line_r1s.y - line_r1e.y) * (line_r1s.x - line_r2s.x) + (line_r1e.x - line_r1s.x) * (line_r1s.y - line_r2s.y)) / h;
 
 							//if (t1 >= 0.0f && t1 < 1.0f && t2 >= 0.0f && t2 < 1.0f)
-       //                     {
+							//                     {
 							//	result.Intersect = true;
 							//	result.collisionTile = polyTile.center;
 							//	result.collidedSide = q;
 							//	return result;
 							//}
-                        }
-                    }
-                }
-				else if (shape == 2)
-                {
-					// Check diagonals of polygon...
-					for (int p = 0; p < polyTile.corners.Length; p++)
-					{
-						Vector2 line_r1s = polyTile.center;
-						Vector2 line_r1e = polyTile.corners[p];
-
-
-                        //Find two line intersect then filter out with AABB check :)
-
-
-
-
-
-
-
-
-
-                        //i cant make this work :(
-
-                        //// Standard line segment intersection (i dinked)
-                        //float h = (line_r2e.x - line_r2s.x) * (line_r1s.y - line_r1e.y) - (line_r1s.x - line_r1e.x) * (line_r2e.y - line_r2s.y);
-                        //float t1 = ((line_r2s.y - line_r2e.y) * (line_r1s.x - line_r2s.x) + (line_r2s.x - line_r2s.x) * (line_r1s.y - line_r2s.y)) / h;
-                        //float t2 = ((line_r1s.y - line_r1e.y) * (line_r1s.x - line_r2s.x) + (line_r1e.x - line_r1s.x) * (line_r1s.y - line_r2s.y)) / h;
-
-                        //if (t1 >= 0.0f && t1 < 1.0f && t2 >= 0.0f && t2 < 1.0f)
-                        //                     {
-                        //	result.Intersect = true;
-                        //	result.collisionTile = polyTile.center;
-                        //	result.collidedSide = q;
-                        //	return result;
-                        //}
+						}
                     }
                 }
             }
@@ -350,24 +411,34 @@ namespace TestMod
 						if (polygonCollisionResult.collidedSide == 0)
                         {
 							Debug.Log("Left collide tile");
+							self.pos += Vector2.up;
+							self.vel *= 0;
                         }
 						else if (polygonCollisionResult.collidedSide == 1)
 						{
 							Debug.Log("Up collide tile");
-						}
+                            self.pos += Vector2.up;
+                            self.vel *= 0;
+                        }
 						else if (polygonCollisionResult.collidedSide == 2)
 						{
 							Debug.Log("Right collide tile");
-						}
+                            self.pos += Vector2.up;
+                            self.vel *= 0;
+                        }
 						else if (polygonCollisionResult.collidedSide == 3)
 						{
 							Debug.Log("Down collide tile");
-						}
+                            self.pos += Vector2.up;
+                            self.vel *= 0;
+                        }
 					}
 					else if (polygonCollisionResult.WillIntersect)
 					{
 						Debug.Log("Will Collide!!!");
-					}
+                        self.pos += Vector2.up;
+                        self.vel *= 0;
+                    }
 				}
 				
 			}

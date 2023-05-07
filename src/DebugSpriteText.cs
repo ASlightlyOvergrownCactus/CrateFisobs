@@ -8,9 +8,9 @@ using UnityEngine;
 namespace TestMod
 {
     // Code taken from https://github.com/casheww/RW-ToolBox/blob/master/SpriteLabel.cs with permission from casheww on Github (tysm!!!)
-    class DebugSprite : CosmeticSprite
+    class DebugSpriteText : CosmeticSprite
     {
-        public DebugSprite(Vector2 vec2)
+        public DebugSpriteText(Vector2 vec2)
         {
             this.vec2 = vec2;
         }
