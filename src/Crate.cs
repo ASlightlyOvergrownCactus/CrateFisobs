@@ -61,7 +61,7 @@ namespace TestMod
 
 
             airFriction = 0.999f;
-            gravity = 0f;
+            gravity = 0.7f;
             bounce = 0.3f;
             surfaceFriction = 1f;
             collisionLayer = 1;
@@ -115,7 +115,7 @@ namespace TestMod
             }*/
 
             rect.center = firstChunk.pos;
-            rect.UpdateCornerPointsWithAngle(2f);
+            rect.UpdateCornerPointsWithAngle(2.5f);
            
             //Debug.Log(rect.center.x + " " + rect.center.y);
 
@@ -219,7 +219,7 @@ namespace TestMod
             for(int i = 0; i < bodyChunks.Length; i++)
             {
                 var spr = sLeaser.sprites[i];
-                spr.SetPosition(Vector2.Lerp(bodyChunks[i].lastPos, bodyChunks[i].pos, timeStacker) - camPos);
+                spr.SetPosition( bodyChunks[i].pos- camPos);
                 spr.scale = bodyChunks[i].rad / 10f;
             }
 

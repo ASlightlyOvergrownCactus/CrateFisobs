@@ -136,7 +136,7 @@ namespace TestMod
 							float px = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4))/d;
 							float py = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / d;
 							Vector2 CollisionPoint = new Vector2(px, py);
-							if(Helper.AABB(line_r1s,line_r1e,line_r2s,line_r2e,CollisionPoint))
+							if(Helper.AABB(line_r1s,line_r1e,line_r2s,line_r2e,CollisionPoint) && d != 0)
 							{
 								result.Intersect = true;
 								result.collisionTile = polyTile.center;
@@ -202,7 +202,7 @@ namespace TestMod
 							float px = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / d;
 							float py = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / d;
 							Vector2 CollisionPoint = new Vector2(px, py);
-							if (Helper.AABB(line_r1s, line_r1e, line_r2s, line_r2e, CollisionPoint))
+							if (Helper.AABB(line_r1s, line_r1e, line_r2s, line_r2e, CollisionPoint)&&d!=0)
 							{
 								result.Intersect = true;
 								result.collisionTile = polyTile.center;
@@ -215,28 +215,28 @@ namespace TestMod
 							}
 
 
+                            //https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
 
 
 
 
 
 
+                            //i cant make this work :(
 
-							//i cant make this work :(
+                            //// Standard line segment intersection (i dinked)
+                            //float h = (line_r2e.x - line_r2s.x) * (line_r1s.y - line_r1e.y) - (line_r1s.x - line_r1e.x) * (line_r2e.y - line_r2s.y);
+                            //float t1 = ((line_r2s.y - line_r2e.y) * (line_r1s.x - line_r2s.x) + (line_r2s.x - line_r2s.x) * (line_r1s.y - line_r2s.y)) / h;
+                            //float t2 = ((line_r1s.y - line_r1e.y) * (line_r1s.x - line_r2s.x) + (line_r1e.x - line_r1s.x) * (line_r1s.y - line_r2s.y)) / h;
 
-							//// Standard line segment intersection (i dinked)
-							//float h = (line_r2e.x - line_r2s.x) * (line_r1s.y - line_r1e.y) - (line_r1s.x - line_r1e.x) * (line_r2e.y - line_r2s.y);
-							//float t1 = ((line_r2s.y - line_r2e.y) * (line_r1s.x - line_r2s.x) + (line_r2s.x - line_r2s.x) * (line_r1s.y - line_r2s.y)) / h;
-							//float t2 = ((line_r1s.y - line_r1e.y) * (line_r1s.x - line_r2s.x) + (line_r1e.x - line_r1s.x) * (line_r1s.y - line_r2s.y)) / h;
-
-							//if (t1 >= 0.0f && t1 < 1.0f && t2 >= 0.0f && t2 < 1.0f)
-							//                     {
-							//	result.Intersect = true;
-							//	result.collisionTile = polyTile.center;
-							//	result.collidedSide = q;
-							//	return result;
-							//}
-						}
+                            //if (t1 >= 0.0f && t1 < 1.0f && t2 >= 0.0f && t2 < 1.0f)
+                            //                     {
+                            //	result.Intersect = true;
+                            //	result.collisionTile = polyTile.center;
+                            //	result.collidedSide = q;
+                            //	return result;
+                            //}
+                        }
                     }
                 }
             }
@@ -321,7 +321,7 @@ namespace TestMod
 							foreach (TilePolygon p in crate.rect.collisionContainer)
 							{
 								//Debug.Log("Got into tile check");
-								if (TilePos.x*20+10 == p.center.x && TilePos.y*20-10 == p.center.y)
+								if (TilePos.x*20+10 == p.center.x && TilePos.y*20+10 == p.center.y)
 								{
 									//Debug.Log("Matching Tile");
 									flag = true;
@@ -331,12 +331,12 @@ namespace TestMod
 							if (!flag)
 							{
 								//Debug.Log("Tile added to list");
-								crate.rect.collisionContainer.Add(new TilePolygon(TilePos.ToVector2()*20 + new Vector2(10,-10)));
+								crate.rect.collisionContainer.Add(new TilePolygon(TilePos.ToVector2()*20 + new Vector2(10, 10)));
 							}
 						}
 					}
                 }
-				Debug.Log(crate.rect.collisionContainer.Count);
+				//Debug.Log(crate.rect.collisionContainer.Count);
 				//Debug.Log("Reached removal");
 				//if (crate.rect.collisionContainer.Count > 0)
 				//{
@@ -370,21 +370,21 @@ namespace TestMod
 		{
 			if (self.owner is Crate)
 			{
-				var crate = self.owner as Crate;
+				//var crate = self.owner as Crate;
 
-				for (int i = 0; i < crate.rect.collisionContainer.Count; i++)
-				{
-					PolygonCollisionResult polygonCollisionResult = PolygonCollisionTile(crate.rect, crate.rect.collisionContainer[i], self.vel);
+				//for (int i = 0; i < crate.rect.collisionContainer.Count; i++)
+				//{
+				//	PolygonCollisionResult polygonCollisionResult = PolygonCollisionTile(crate.rect, crate.rect.collisionContainer[i], self.vel);
 
-					if (polygonCollisionResult.Intersect)
-					{
-						//Debug.Log("Currently Colliding!!! With " + polygonCollisionResult.collisionTile);
-					}
-					else if (polygonCollisionResult.WillIntersect)
-					{
-						Debug.Log("Will Collide!!!");
-					}
-				}
+				//	if (polygonCollisionResult.Intersect)
+				//	{
+				//		//Debug.Log("Currently Colliding!!! With " + polygonCollisionResult.collisionTile);
+				//	}
+				//	else if (polygonCollisionResult.WillIntersect)
+				//	{
+				//		Debug.Log("Will Collide!!!");
+				//	}
+				//}
 			
 			}
 			else
@@ -410,25 +410,25 @@ namespace TestMod
 						self.pos = self.lastPos;
 						if (polygonCollisionResult.collidedSide == 0)
                         {
-							Debug.Log("Left collide tile");
+							//Debug.Log("Left collide tile");
 							self.pos += Vector2.up;
 							self.vel *= 0;
                         }
 						else if (polygonCollisionResult.collidedSide == 1)
 						{
-							Debug.Log("Up collide tile");
+							//Debug.Log("Up collide tile");
                             self.pos += Vector2.up;
                             self.vel *= 0;
                         }
 						else if (polygonCollisionResult.collidedSide == 2)
 						{
-							Debug.Log("Right collide tile");
+							//Debug.Log("Right collide tile");
                             self.pos += Vector2.up;
                             self.vel *= 0;
                         }
 						else if (polygonCollisionResult.collidedSide == 3)
 						{
-							Debug.Log("Down collide tile");
+							//Debug.Log("Down collide tile");
                             self.pos += Vector2.up;
                             self.vel *= 0;
                         }
