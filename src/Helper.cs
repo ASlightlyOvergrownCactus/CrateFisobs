@@ -12,7 +12,7 @@ namespace TestMod
 
         public static bool IsBetween(float a, float b,float c)
         {
-            return a < b && b < c;
+            return (a <= b && b <= c)|| (a >= b && b >= c);
         }
 
         public static bool AABB(Vector2 Line1a,Vector2 Line1b,Vector2 Line2a,Vector2 Line2b,Vector2 p)
@@ -26,7 +26,7 @@ namespace TestMod
             Vector2 RightDownB = new Vector2(Math.Max(Line2a.x, Line2b.x)+ Margin, Math.Min(Line2a.y, Line2b.y)- Margin);
 
             bool X= IsBetween(TopLeftA.x, p.x, RightDownA.x) && IsBetween(TopLeftB.x,p.x,RightDownB.x);
-            bool Y= IsBetween(TopLeftA.y, p.y, RightDownA.y) && IsBetween(TopLeftB.y, p.y, RightDownB.y);
+            bool Y= IsBetween(RightDownA.y, p.y, TopLeftA.y) && IsBetween(RightDownB.y, p.y, TopLeftB.y);
 
             return X && Y;
         }

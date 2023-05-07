@@ -55,7 +55,7 @@ namespace TestMod
             // Loop through each corner point
             for (int i = 0; i < corners.Length; i++)
             {
-                corners[i] = RWCustom.Custom.RotateAroundOrigo(corners[i], 45f);
+                corners[i] = RWCustom.Custom.RotateAroundOrigo(corners[i], angleDeg);
                 corners[i] += center;
             }
         }
@@ -63,7 +63,8 @@ namespace TestMod
         public void UpdateCornerPointsWithAngle(float angleAdded)
         {
             // Define the corner points of the shape
-
+            angleDeg += angleAdded;
+            angleDeg = angleDeg%360;
             for (int i = 0; i < corners.Length; i++)
             {
                 corners[i] = originalCorners[i];
@@ -75,7 +76,7 @@ namespace TestMod
             // Loop through each corner point
             for (int i = 0; i < corners.Length; i++)
             {
-                corners[i] = RWCustom.Custom.RotateAroundOrigo(corners[i], 45f);
+                corners[i] = RWCustom.Custom.RotateAroundOrigo(corners[i], angleDeg);
                 corners[i] += center;
             }
 

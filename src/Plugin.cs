@@ -125,11 +125,11 @@ namespace TestMod
 							float y1 = line_r1s.y;
 							float y2 = line_r1e.y;
 
-							float x3 = line_r1s.x;
-							float x4 = line_r1e.x;
+							float x3 = line_r2s.x;
+							float x4 = line_r2e.x;
 
-							float y3 = line_r1s.y;
-							float y4 = line_r1e.y;
+							float y3 = line_r2s.y;
+							float y4 = line_r2e.y;
 
 							float d = (x1-x2)*(y3-y4) - (y1-y2)*(x3-x4);
 
@@ -191,11 +191,11 @@ namespace TestMod
 							float y1 = line_r1s.y;
 							float y2 = line_r1e.y;
 
-							float x3 = line_r1s.x;
-							float x4 = line_r1e.x;
+							float x3 = line_r2s.x;
+							float x4 = line_r2e.x;
 
-							float y3 = line_r1s.y;
-							float y4 = line_r1e.y;
+							float y3 = line_r2s.y;
+							float y4 = line_r2e.y;
 
 							float d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
 
@@ -280,7 +280,7 @@ namespace TestMod
 				// X value most right
 				for (int i = 0; i < crate.rect.corners.Length; i++)
 				{
-					if (crate.rect.corners[i].x > colRectDimensions[0])
+					if (crate.rect.corners[i].x > colRectDimensions[2])
 					{
 						colRectDimensions[2] = crate.rect.corners[i].x;
 					}
@@ -307,7 +307,7 @@ namespace TestMod
 
 
 				Rect collisionDetector = new(startPoint.x, startPoint.y, dimensions.x, dimensions.y);
-
+				crate.rect.collisionContainer.Clear();
 				for (int i = 0; i < collisionDetector.width; i++)
                 {
 					for (int a = 0; a < collisionDetector.height; a++)
@@ -321,7 +321,7 @@ namespace TestMod
 							foreach (TilePolygon p in crate.rect.collisionContainer)
 							{
 								//Debug.Log("Got into tile check");
-								if (TilePos.x*20+10 == p.center.x && TilePos.y*20+10 == p.center.y)
+								if (TilePos.x*20+10 == p.center.x && TilePos.y*20-10 == p.center.y)
 								{
 									//Debug.Log("Matching Tile");
 									flag = true;
@@ -331,28 +331,28 @@ namespace TestMod
 							if (!flag)
 							{
 								//Debug.Log("Tile added to list");
-								crate.rect.collisionContainer.Add(new TilePolygon(TilePos.ToVector2()*20 + new Vector2(10,10)));
+								crate.rect.collisionContainer.Add(new TilePolygon(TilePos.ToVector2()*20 + new Vector2(10,-10)));
 							}
 						}
 					}
                 }
-
+				Debug.Log(crate.rect.collisionContainer.Count);
 				//Debug.Log("Reached removal");
-				if (crate.rect.collisionContainer.Count > 0)
-				{
-					for (int i = 0; i < crate.rect.collisionContainer.Count; i++)
-					{
-						TilePolygon temp = crate.rect.collisionContainer[i];
-						Vector2 check = (temp.center / 20f)+new Vector2(10, 10);
-						if (!collisionDetector.Contains(check))
-						{
-							//Debug.Log("removing");
-							crate.rect.collisionContainer.RemoveAt(i);
-							//Debug.Log("Finished removing");
-						}
+				//if (crate.rect.collisionContainer.Count > 0)
+				//{
+				//	for (int i = 0; i < crate.rect.collisionContainer.Count; i++)
+				//	{
+				//		TilePolygon temp = crate.rect.collisionContainer[i];
+				//		Vector2 check = (temp.center / 20f)+new Vector2(10, 10);
+				//		if (!collisionDetector.Contains(check))
+				//		{
+				//			//Debug.Log("removing");
+				//			crate.rect.collisionContainer.RemoveAt(i);
+				//			//Debug.Log("Finished removing");
+				//		}
 
-					}
-				}
+				//	}
+				//}
 				// Only use this log for debugging!!! This lags a LOT!!!!!
 				/*
 				Debug.Log(crate.rect.center / 20f);
