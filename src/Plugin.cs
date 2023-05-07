@@ -78,7 +78,14 @@ namespace TestMod
 			public Vector2 collisionTile;
 			// Contains the number that corresponds to the side collided.
 			public int collidedSide;
-		}
+
+			public Vector2 line1a;
+			public Vector2 line1b;
+			public Vector2 line2a;
+			public Vector2 line2b;
+
+			public Vector2 CollisionPos;
+        }
 
 
 
@@ -201,16 +208,16 @@ namespace TestMod
 				// Y value most down
 				for (int i = 0; i < crate.rect.corners.Length; i++)
 				{
-					if (crate.rect.corners[i].x < colRectDimensions[3])
+					if (crate.rect.corners[i].y < colRectDimensions[3])
 					{
-						colRectDimensions[3] = crate.rect.corners[i].x;
+						colRectDimensions[3] = crate.rect.corners[i].y;
 					}
 				}
 
-				colRectDimensions[0] -= 40f;
-				colRectDimensions[1] += 40f;
-				colRectDimensions[2] += 40f;
-				colRectDimensions[3] -= 40f;
+				colRectDimensions[0] -= 140f;
+				colRectDimensions[1] += 140f;
+				colRectDimensions[2] += 140f;
+				colRectDimensions[3] -= 140f;
 
 				RWCustom.IntVector2 startPoint = self.owner.room.GetTilePosition(new Vector2(colRectDimensions[0], colRectDimensions[1]));
 				RWCustom.IntVector2 dimensions = self.owner.room.GetTilePosition(new Vector2(colRectDimensions[2] - colRectDimensions[0], colRectDimensions[1] - colRectDimensions[3]));
@@ -224,14 +231,16 @@ namespace TestMod
                 {
 					for (int a = 0; a < collisionDetector.height; a++)
                     {
-						if (self.owner.room.GetTile(new RWCustom.IntVector2(i + (int)collisionDetector.x,(int)collisionDetector.y - a)).Terrain == Room.Tile.TerrainType.Solid)
+						RWCustom.IntVector2 TilePos= new RWCustom.IntVector2(i + (int)collisionDetector.x, (int)collisionDetector.y - a);
+
+						if (self.owner.room.GetTile(TilePos).Terrain == Room.Tile.TerrainType.Solid)
 						{
 							bool flag = false;
 
 							foreach (TilePolygon p in crate.rect.collisionContainer)
 							{
 								//Debug.Log("Got into tile check");
-								if (new RWCustom.IntVector2(i + (int)collisionDetector.x, (int)collisionDetector.y - a).ToVector2().x == p.center.x && new RWCustom.IntVector2(i + (int)collisionDetector.x, (int)collisionDetector.y - a).ToVector2().y == p.center.y)
+								if (TilePos.x*20+10 == p.center.x && TilePos.y*20+10 == p.center.y)
 								{
 									//Debug.Log("Matching Tile");
 									flag = true;
@@ -241,7 +250,7 @@ namespace TestMod
 							if (!flag)
 							{
 								//Debug.Log("Tile added to list");
-								crate.rect.collisionContainer.Add(new TilePolygon(new Vector2((i + collisionDetector.x) * 20f, (collisionDetector.y - a) * 20f)));
+								crate.rect.collisionContainer.Add(new TilePolygon(TilePos.ToVector2()*20 + new Vector2(10,10)));
 							}
 						}
 					}
@@ -253,7 +262,7 @@ namespace TestMod
 					for (int i = 0; i < crate.rect.collisionContainer.Count; i++)
 					{
 						TilePolygon temp = crate.rect.collisionContainer[i];
-						Vector2 check = temp.center / 20f;
+						Vector2 check = (temp.center / 20f)+new Vector2(10, 10);
 						if (!collisionDetector.Contains(check))
 						{
 							//Debug.Log("removing");

@@ -114,9 +114,9 @@ namespace TestMod
                 bodyChunks[0].vel = new Vector2(bodyChunks[0].vel.x * 0.65f, bodyChunks[0].vel.y);
             }*/
 
-            rect.center = firstChunk.pos - (new Vector2(firstChunk.rad, firstChunk.rad * 2));
+            rect.center = firstChunk.pos;
             rect.UpdateCornerPoints();
-            rect.angleDeg += 0.3f;
+           
             //Debug.Log(rect.center.x + " " + rect.center.y);
 
 
@@ -226,7 +226,7 @@ namespace TestMod
             for (int a = 0; a < rect.corners.Length; a++)
             {
                 var sprExt = sLeaser.sprites[bodyChunks.Length + a];
-                sprExt.SetPosition(rect.corners[a] - camPos + new Vector2(40f, 60f));
+                sprExt.SetPosition(rect.corners[a] - camPos );
                 sprExt.scale = 5f;
             }
 

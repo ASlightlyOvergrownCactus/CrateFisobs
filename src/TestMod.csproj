@@ -4,17 +4,12 @@
     <TargetFramework>net48</TargetFramework>
     <LangVersion>9</LangVersion>
 	<Nullable>enable</Nullable>
+	<BaseOutputPath>C:\Users\johns\OneDrive\Documents\GitHub\CrateFisobs\Cube_phsyics_Mod\Plugins</BaseOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
     <Reference Include="../lib/*.dll">
       <Private>False</Private>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Fisobs">
-      <HintPath>..\..\..\..\..\..\Downloads\Fisobs (1).dll</HintPath>
     </Reference>
   </ItemGroup>
 
