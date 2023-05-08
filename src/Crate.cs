@@ -26,7 +26,7 @@ namespace TestMod
         public Crate(CrateAbstract abstr) : base(abstr)
         {
            
-            rad = 50f;
+            rad = 10f;
             Debug.Log("Initializing Crate Object!");
             float mass = 10f;
             Abstr = abstr;
@@ -45,7 +45,7 @@ namespace TestMod
             // Create all body chunks
             for(int i = 0; i < bodyChunks.Length; i++)
             {
-                bodyChunks[i] = new BodyChunk(this, i, new Vector2(), rad, mass / bodyChunks.Length);
+                bodyChunks[i] = new BodyChunk(this, i, new Vector2(), 1f, mass / bodyChunks.Length);
             }
 
             bodyChunkConnections = new BodyChunkConnection[bodyChunks.Length * (bodyChunks.Length - 1) / 2];
@@ -94,7 +94,8 @@ namespace TestMod
             */
 
             Debug.Log("Loading Crate BodyChunk ctor!");
-            rect = new Polygon(this.bodyChunks[0].pos, rad * 2, rad * 2, origCorners);
+           //rect = new Polygon(this.bodyChunks[0].pos, rad * 2, rad * 2, origCorners);
+            rect = new Polygon(this.bodyChunks[0].pos, 60, 3);
             if (Plugin.DEBUGMODE) { DebugSpr = new PolygonDebugSprite(rect); }
 
         }
@@ -118,7 +119,7 @@ namespace TestMod
             }*/
 
             rect.center = firstChunk.pos;
-            rect.UpdateCornerPointsWithAngle(2.5f);
+            rect.UpdateCornerPointsWithAngle(.5f);
            
             //Debug.Log(rect.center.x + " " + rect.center.y);
 
@@ -186,7 +187,7 @@ namespace TestMod
             Vector2 center = placeRoom.MiddleOfTile(abstractPhysicalObject.pos);
             bodyChunks[0].HardSetPosition(new Vector2(0, 0) * 20f + center);
             rect.UpdateCornerPoints();
-            placeRoom.AddObject(DebugSpr);
+            if(DebugSpr!=null)placeRoom.AddObject(DebugSpr);
         }
 
         public override void TerrainImpact(int chunk, IntVector2 direction, float speed, bool firstContact)

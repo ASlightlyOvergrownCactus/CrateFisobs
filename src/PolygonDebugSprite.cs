@@ -128,7 +128,14 @@ namespace TestMod
 
 
                 sLeaser.sprites[ColliResultSpr].SetPosition(result.CollisionPos - camPos);
-              
+                sLeaser.sprites[ColliResultSpr].isVisible = true;
+
+            } else
+            {
+                for(int i = ColliLineSpr;i<ColliLineSpr+ColliLineCount+ColliResultCount;i++)
+                {
+                    sLeaser.sprites[i].isVisible=false;
+                }
             }
 
             base.DrawSprites(sLeaser, rCam, timeStacker, camPos);

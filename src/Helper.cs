@@ -30,5 +30,17 @@ namespace TestMod
 
             return X && Y;
         }
+
+        //public Vector2 PointRelativeDir(Vector2 o,Vector2 c)
+        //{
+        //    if (c.x < o.x) return Vector2.left;
+
+        //    return Vector2.zero;
+        //}
+
+        //public Vector2 PushOutOfTerrainVec(Vector2 colli,Vector2 Objectcenter,Vector2 PointInTerrain)
+        //{
+           
+        //}
     }
 }

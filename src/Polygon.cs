@@ -5,13 +5,15 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using System.Drawing.Drawing2D;
-
+using RWCustom;
 namespace TestMod
 {
     class Polygon
     {
         public UnityEngine.Vector2 center;
         public UnityEngine.Vector2[] corners;
+        public UnityEngine.Vector2[] lastcorners;
+        public UnityEngine.Vector2[] lastlastcorners2;
         private List<Vector2> edges = new List<Vector2>();
         public float width;
         public float height;
@@ -27,8 +29,26 @@ namespace TestMod
             originalCorners = origCorners;
             corners = new UnityEngine.Vector2[originalCorners.Length];
             edges = new List<Vector2>();
-            UpdateCornerPointsWithAngle(0f);
+            UpdateCornerPoints();
             angleDeg = 0f;
+            Debug.Log("Adding actual polygon list!");
+            collisionContainer = new List<TilePolygon>();
+            
+        }
+        public Polygon(Vector2 center, float scale, int NumberOfPoint,float ang=0)
+        {
+            this.center = center;
+            this.width = scale;
+            this.height = scale;
+            this.angleDeg = ang;
+            
+            originalCorners = new Vector2[NumberOfPoint];
+            for(int i = 0;i < NumberOfPoint; i++) { originalCorners[i] = Custom.RotateAroundOrigo(Vector2.up*scale, (360/NumberOfPoint)*i); }
+            this.corners = new Vector2[NumberOfPoint];
+
+
+          
+            UpdateCornerPoints();
             Debug.Log("Adding actual polygon list!");
             collisionContainer = new List<TilePolygon>();
             
