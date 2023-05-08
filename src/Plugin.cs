@@ -295,24 +295,11 @@ namespace TestMod
 					}
 				}
 
-				colRectDimensions[0] -= 140f;//x y x y
+				colRectDimensions[0] -= 140f;
 				colRectDimensions[1] += 140f;
 				colRectDimensions[2] += 140f;
 				colRectDimensions[3] -= 140f;
 
-				if((self.owner as Crate).DebugSpr!=null) 
-				{
-					(self.owner as Crate).DebugSpr.ColliSquare = new Vector2[4]
-					{
-						new Vector2(colRectDimensions[0],colRectDimensions[3]),
-						new Vector2(colRectDimensions[0],colRectDimensions[1]),
-						new Vector2(colRectDimensions[2],colRectDimensions[1]),
-						new Vector2(colRectDimensions[2],colRectDimensions[3]),
-
-					};
-					
-					
-					}
 				RWCustom.IntVector2 startPoint = self.owner.room.GetTilePosition(new Vector2(colRectDimensions[0], colRectDimensions[1]));
 				RWCustom.IntVector2 dimensions = self.owner.room.GetTilePosition(new Vector2(colRectDimensions[2] - colRectDimensions[0], colRectDimensions[1] - colRectDimensions[3]));
 				//Debug.Log(startPoint);
@@ -349,40 +336,33 @@ namespace TestMod
 						}
 					}
                 }
-				if ((self.owner as Crate).DebugSpr != null)
-				{
-					(self.owner as Crate).DebugSpr.Tiles = crate.rect.collisionContainer;
+				//Debug.Log(crate.rect.collisionContainer.Count);
+				//Debug.Log("Reached removal");
+				//if (crate.rect.collisionContainer.Count > 0)
+				//{
+				//	for (int i = 0; i < crate.rect.collisionContainer.Count; i++)
+				//	{
+				//		TilePolygon temp = crate.rect.collisionContainer[i];
+				//		Vector2 check = (temp.center / 20f)+new Vector2(10, 10);
+				//		if (!collisionDetector.Contains(check))
+				//		{
+				//			//Debug.Log("removing");
+				//			crate.rect.collisionContainer.RemoveAt(i);
+				//			//Debug.Log("Finished removing");
+				//		}
 
+				//	}
+				//}
+				// Only use this log for debugging!!! This lags a LOT!!!!!
+				/*
+				Debug.Log(crate.rect.center / 20f);
+				Debug.Log(crate.rect.collisionContainer.Count);
+				foreach (TilePolygon p in crate.rect.collisionContainer)
+                {
+					Debug.Log("X: " + p.center.x + "   Y: " + p.center.y);
                 }
-                    //Debug.Log(crate.rect.collisionContainer.Count);
-                    //Debug.Log("Reached removal");
-                    //if (crate.rect.collisionContainer.Count > 0)
-                    //{
-                    //	for (int i = 0; i < crate.rect.collisionContainer.Count; i++)
-                    //	{
-                    //		TilePolygon temp = crate.rect.collisionContainer[i];
-                    //		Vector2 check = (temp.center / 20f)+new Vector2(10, 10);
-                    //		if (!collisionDetector.Contains(check))
-                    //		{
-                    //			//Debug.Log("removing");
-                    //			crate.rect.collisionContainer.RemoveAt(i);
-                    //			//Debug.Log("Finished removing");
-                    //		}
-
-                    //	}
-                    //}
-
-
-                    // Only use this log for debugging!!! This lags a LOT!!!!!
-                    /*
-                    Debug.Log(crate.rect.center / 20f);
-                    Debug.Log(crate.rect.collisionContainer.Count);
-                    foreach (TilePolygon p in crate.rect.collisionContainer)
-                    {
-                        Debug.Log("X: " + p.center.x + "   Y: " + p.center.y);
-                    }
-                    */
-                }
+				*/
+			}
 		}
 
 
@@ -418,43 +398,40 @@ namespace TestMod
 
 			if (self.owner is Crate)
 			{
-				Crate crate = self.owner as Crate;
+				var crate = self.owner as Crate;
 
 				for (int i = 0; i < crate.rect.collisionContainer.Count; i++)
 				{
 					PolygonCollisionResult polygonCollisionResult = PolygonCollisionTile(crate.rect, crate.rect.collisionContainer[i], self.vel);
 
-					
 					if (polygonCollisionResult.Intersect)
 					{
-                        crate.DebugSpr.result = polygonCollisionResult;
-                        Debug.Log("Currently Colliding!!! With " + polygonCollisionResult.collisionTile);
+						Debug.Log("Currently Colliding!!! With " + polygonCollisionResult.collisionTile);
 						self.pos = self.lastPos;
 						if (polygonCollisionResult.collidedSide == 0)
                         {
 							//Debug.Log("Left collide tile");
-							self.pos += Vector2.up/2;
+							self.pos += Vector2.up;
 							self.vel *= 0;
                         }
 						else if (polygonCollisionResult.collidedSide == 1)
 						{
 							//Debug.Log("Up collide tile");
-                            self.pos += Vector2.up/2;
+                            self.pos += Vector2.up;
                             self.vel *= 0;
                         }
 						else if (polygonCollisionResult.collidedSide == 2)
 						{
 							//Debug.Log("Right collide tile");
-                            self.pos += Vector2.up / 2;
+                            self.pos += Vector2.up;
                             self.vel *= 0;
                         }
 						else if (polygonCollisionResult.collidedSide == 3)
 						{
 							//Debug.Log("Down collide tile");
-                            self.pos += Vector2.up / 2;
+                            self.pos += Vector2.up;
                             self.vel *= 0;
                         }
-						return;  //breaks when found one colli
 					}
 					else if (polygonCollisionResult.WillIntersect)
 					{
