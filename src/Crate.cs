@@ -8,7 +8,7 @@ namespace TestMod
     {
         private static float Rand => UnityEngine.Random.value;
 
-        public float lastDarkness = -1f;
+        public float lastDarkness = -2f;
         public float rotation;
         public float lastRotation;
         public float rotVel;
@@ -114,9 +114,9 @@ namespace TestMod
                 bodyChunks[0].vel = new Vector2(bodyChunks[0].vel.x * 0.65f, bodyChunks[0].vel.y);
             }*/
 
-            rect.center = firstChunk.pos - (new Vector2(firstChunk.rad, firstChunk.rad * 2));
-            rect.UpdateCornerPoints();
-            rect.angleDeg += 0.3f;
+            rect.center = firstChunk.pos;
+            rect.UpdateCornerPointsWithAngle(2.5f);
+           
             //Debug.Log(rect.center.x + " " + rect.center.y);
 
 
@@ -219,15 +219,15 @@ namespace TestMod
             for(int i = 0; i < bodyChunks.Length; i++)
             {
                 var spr = sLeaser.sprites[i];
-                spr.SetPosition(Vector2.Lerp(bodyChunks[i].lastPos, bodyChunks[i].pos, timeStacker) - camPos);
+                spr.SetPosition( bodyChunks[i].pos- camPos);
                 spr.scale = bodyChunks[i].rad / 10f;
             }
 
             for (int a = 0; a < rect.corners.Length; a++)
             {
                 var sprExt = sLeaser.sprites[bodyChunks.Length + a];
-                sprExt.SetPosition(rect.corners[a] - camPos + new Vector2(40f, 60f));
-                sprExt.scale = 5f;
+                sprExt.SetPosition(rect.corners[a] - camPos );
+                sprExt.scale = 2f;
             }
 
 
