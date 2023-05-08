@@ -16,7 +16,8 @@ namespace TestMod
         public Polygon rect;
         public float rad;
         private readonly float rotationOffset;
-
+        
+        public PolygonDebugSprite DebugSpr;
         // Idea: Custom Code a square collision (very hard)
 
 
@@ -24,7 +25,8 @@ namespace TestMod
         public CrateAbstract Abstr { get; }
         public Crate(CrateAbstract abstr) : base(abstr)
         {
-            rad = 30f;
+           
+            rad = 50f;
             Debug.Log("Initializing Crate Object!");
             float mass = 10f;
             Abstr = abstr;
@@ -93,6 +95,7 @@ namespace TestMod
 
             Debug.Log("Loading Crate BodyChunk ctor!");
             rect = new Polygon(this.bodyChunks[0].pos, rad * 2, rad * 2, origCorners);
+            if (Plugin.DEBUGMODE) { DebugSpr = new PolygonDebugSprite(rect); }
 
         }
 
@@ -143,6 +146,7 @@ namespace TestMod
                 rotVel *= 0.9f;
                 rotation = Mathf.Lerp(rotation, grabberChunk.Rotation.GetAngle() + rotationOffset, 0.25f);
             }
+            
         }
 
         private void ResetVel(float speed)
@@ -182,6 +186,7 @@ namespace TestMod
             Vector2 center = placeRoom.MiddleOfTile(abstractPhysicalObject.pos);
             bodyChunks[0].HardSetPosition(new Vector2(0, 0) * 20f + center);
             rect.UpdateCornerPoints();
+            placeRoom.AddObject(DebugSpr);
         }
 
         public override void TerrainImpact(int chunk, IntVector2 direction, float speed, bool firstContact)
@@ -220,7 +225,7 @@ namespace TestMod
             {
                 var spr = sLeaser.sprites[i];
                 spr.SetPosition( bodyChunks[i].pos- camPos);
-                spr.scale = bodyChunks[i].rad / 10f;
+                spr.scale = rect.width / 20f;
             }
 
             for (int a = 0; a < rect.corners.Length; a++)
