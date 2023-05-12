@@ -81,3 +81,4 @@ C:\Users\johns\OneDrive\Documents\GitHub\CrateFisobs\src\obj\Debug\net48\TestMod
 C:\Users\johns\OneDrive\Documents\GitHub\CrateFisobs\src\obj\Debug\net48\TestMod.csproj.CoreCompileInputs.cache
 C:\Users\johns\OneDrive\Documents\GitHub\CrateFisobs\src\obj\Debug\net48\TestMod.dll
 C:\Users\johns\OneDrive\Documents\GitHub\CrateFisobs\src\obj\Debug\net48\TestMod.pdb
+C:\Users\johns\OneDrive\Documents\GitHub\CrateFisobs\src\obj\Debug\net48\TestMod.csproj.CopyComplete

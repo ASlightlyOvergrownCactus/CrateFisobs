@@ -10,10 +10,10 @@ namespace TestMod
 {
     class Polygon
     {
-        public UnityEngine.Vector2 center;
+        public BodyChunk center;
         public UnityEngine.Vector2[] corners;
         public UnityEngine.Vector2[] lastcorners;
-        public UnityEngine.Vector2[] lastlastcorners2;
+        public UnityEngine.Vector2[] lastlastcorners;
         private List<Vector2> edges = new List<Vector2>();
         public float width;
         public float height;
@@ -21,21 +21,23 @@ namespace TestMod
         public List<TilePolygon> collisionContainer; 
         private Vector2[] originalCorners;
 
-        public Polygon(UnityEngine.Vector2 center, float width, float height, Vector2[] origCorners)
+        public Polygon(BodyChunk center, float width, float height, Vector2[] origCorners)
         {
             this.center = center;
             this.width = width;
             this.height = height;
             originalCorners = origCorners;
             corners = new UnityEngine.Vector2[originalCorners.Length];
+            lastcorners = new UnityEngine.Vector2[originalCorners.Length];
+            lastlastcorners = new UnityEngine.Vector2[originalCorners.Length];
             edges = new List<Vector2>();
             UpdateCornerPoints();
-            angleDeg = 0f;
+            angleDeg = 45f;
             Debug.Log("Adding actual polygon list!");
             collisionContainer = new List<TilePolygon>();
             
         }
-        public Polygon(Vector2 center, float scale, int NumberOfPoint,float ang=0)
+        public Polygon(BodyChunk center, float scale, int NumberOfPoint,float ang=0)
         {
             this.center = center;
             this.width = scale;
@@ -45,28 +47,47 @@ namespace TestMod
             originalCorners = new Vector2[NumberOfPoint];
             for(int i = 0;i < NumberOfPoint; i++) { originalCorners[i] = Custom.RotateAroundOrigo(Vector2.up*scale, (360/NumberOfPoint)*i); }
             this.corners = new Vector2[NumberOfPoint];
+            this.lastcorners = new Vector2[NumberOfPoint];
+            this.lastlastcorners = new Vector2[NumberOfPoint];
 
 
-          
             UpdateCornerPoints();
             Debug.Log("Adding actual polygon list!");
             collisionContainer = new List<TilePolygon>();
             
         }
 
-        public void Move(UnityEngine.Vector2 velocity)
+        public Vector2 vel(int corner)
         {
-            center += velocity * Time.deltaTime;
+            return this.lastcorners[corner] -this.corners[corner];
         }
 
+        public void Move(UnityEngine.Vector2 velocity)
+        {
+            center.vel += velocity * Time.deltaTime;
+        }
+        public void ChangeSize(float s)
+        {
+            this.width = s;
+            this.height = s;
+        }
+
+        public void ChangeSize(float s,float t)
+        {
+            this.width = s;
+            this.height = t;
+        }
         public void UpdateCornerPoints()
         {
-            //Debug.Log(center);
+            this.lastcorners.CopyTo(this.lastlastcorners, 0);
+            this.corners.CopyTo(this.lastcorners, 0);
+            
+            
             // Define the corner points of the shape
 
             for (int i = 0; i < corners.Length; i++)
             {
-                corners[i] = originalCorners[i];
+                corners[i] = originalCorners[i]*new Vector2(width,height);
             }
 
             // Define edges
@@ -75,19 +96,22 @@ namespace TestMod
             // Loop through each corner point
             for (int i = 0; i < corners.Length; i++)
             {
-                corners[i] = RWCustom.Custom.RotateAroundOrigo(corners[i], angleDeg);
-                corners[i] += center;
+                corners[i] = Custom.RotateAroundOrigo(corners[i], angleDeg);
+                corners[i] += center.pos+center.vel;
             }
+           
         }
 
         public void UpdateCornerPointsWithAngle(float angleAdded)
         {
+            this.lastcorners.CopyTo(this.lastlastcorners, 0);
+            this.corners.CopyTo(this.lastcorners, 0);
             // Define the corner points of the shape
             angleDeg += angleAdded;
-            angleDeg = angleDeg%360;
+            angleDeg = angleDeg%359;
             for (int i = 0; i < corners.Length; i++)
             {
-                corners[i] = originalCorners[i];
+                corners[i] = originalCorners[i] * new Vector2(width, height);
             }
 
             // Define Edges
@@ -97,7 +121,7 @@ namespace TestMod
             for (int i = 0; i < corners.Length; i++)
             {
                 corners[i] = RWCustom.Custom.RotateAroundOrigo(corners[i], angleDeg);
-                corners[i] += center;
+                corners[i] += center.pos + center.vel;
             }
 
         }

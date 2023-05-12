@@ -26,7 +26,7 @@ namespace TestMod
         public Crate(CrateAbstract abstr) : base(abstr)
         {
            
-            rad = 10f;
+            rad = 30f;
             Debug.Log("Initializing Crate Object!");
             float mass = 10f;
             Abstr = abstr;
@@ -63,7 +63,7 @@ namespace TestMod
 
 
             airFriction = 0.999f;
-            gravity = 0.7f;
+            gravity = 0f;
             bounce = 0.3f;
             surfaceFriction = 1f;
             collisionLayer = 1;
@@ -80,10 +80,10 @@ namespace TestMod
 
             // Square
             
-            origCorners[0] = new UnityEngine.Vector2(-width / 2f, -height / 2f); // Bottom Left
-            origCorners[1] = new UnityEngine.Vector2(-width / 2f, height / 2f); // Top Left
-            origCorners[2] = new UnityEngine.Vector2(width / 2f, height / 2f); // Top Right
-            origCorners[3] = new UnityEngine.Vector2(width / 2f, -height / 2f); // Bottom Right
+            origCorners[0] = new UnityEngine.Vector2(-1 / 2f, -1 / 2f); // Bottom Left
+            origCorners[1] = new UnityEngine.Vector2(-1 / 2f,4 / 2f); // Top Left
+            origCorners[2] = new UnityEngine.Vector2(1 / 2f, 4 / 2f); // Top Right
+            origCorners[3] = new UnityEngine.Vector2(1 / 2f, -1 / 2f); // Bottom Right
 
             // Triangle needs some work with the allingement, but custom shapes work!
             // Triangle
@@ -94,8 +94,8 @@ namespace TestMod
             */
 
             Debug.Log("Loading Crate BodyChunk ctor!");
-           //rect = new Polygon(this.bodyChunks[0].pos, rad * 2, rad * 2, origCorners);
-            rect = new Polygon(this.bodyChunks[0].pos, 60, 3);
+           rect = new Polygon(this.bodyChunks[0], width/2, height/2, origCorners);
+            //rect = new Polygon(this.bodyChunks[0].pos, 60, 3);
             if (Plugin.DEBUGMODE) { DebugSpr = new PolygonDebugSprite(rect); }
 
         }
@@ -110,7 +110,10 @@ namespace TestMod
         public override void Update(bool eu)
         {
             base.Update(eu);
-
+            //if(Input.GetMouseButtonDown(0))
+            //{
+            //    this.bodyChunks[0].vel += this.bodyChunks[0].pos-new Vector2(Input.mousePosition.x, Input.mousePosition.y);
+            //}
 
             /*if (grabbedBy.Count == 0)
             {
@@ -118,15 +121,17 @@ namespace TestMod
                 bodyChunks[0].vel = new Vector2(bodyChunks[0].vel.x * 0.65f, bodyChunks[0].vel.y);
             }*/
 
-            rect.center = firstChunk.pos;
-            rect.UpdateCornerPointsWithAngle(.5f);
+            rect.center = firstChunk;
+            //rect.ChangeSize(85);
+            //Debug.Log(rect.vel(1));
+            rect.UpdateCornerPointsWithAngle(20.5f);
            
             //Debug.Log(rect.center.x + " " + rect.center.y);
 
 
-            var chunk = firstChunk;
+          
             lastRotation = rotation;
-            rotation += rotVel * Vector2.Distance(chunk.lastPos, chunk.pos);
+            rotation = rect.angleDeg;
 
             rotation %= 360;
 
@@ -184,6 +189,8 @@ namespace TestMod
             Debug.Log("Placing Crate!");
             base.PlaceInRoom(placeRoom);
 
+           // Time.timeScale = 0.3f;
+
             Vector2 center = placeRoom.MiddleOfTile(abstractPhysicalObject.pos);
             bodyChunks[0].HardSetPosition(new Vector2(0, 0) * 20f + center);
             rect.UpdateCornerPoints();
@@ -208,7 +215,7 @@ namespace TestMod
             sLeaser.sprites[0] = new FSprite("icon_Crate", true);*/
             
             for(int i = 0; i < bodyChunks.Length; i++)
-                sLeaser.sprites[i] = new FSprite("Circle20");
+                sLeaser.sprites[i] = new FSprite("FaceE1");
 
             for (int i = bodyChunks.Length; i < bodyChunks.Length + rect.corners.Length; i++)
                 sLeaser.sprites[i] = new FSprite("Circle4");
@@ -221,12 +228,13 @@ namespace TestMod
 
         public void DrawSprites(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
         {
+
             // Colors in collidors
             for(int i = 0; i < bodyChunks.Length; i++)
             {
                 var spr = sLeaser.sprites[i];
-                spr.SetPosition( bodyChunks[i].pos- camPos);
-                spr.scale = rect.width / 20f;
+                spr.SetPosition(bodyChunks[i].pos + bodyChunks[i].vel - camPos);
+                spr.scale = rect.width/10;
             }
 
             for (int a = 0; a < rect.corners.Length; a++)
@@ -241,7 +249,7 @@ namespace TestMod
                 sLeaser.CleanSpritesAndRemove();
 
 
-            sLeaser.sprites[0].rotation = Mathf.Lerp(lastRotation, rotation, timeStacker);
+            sLeaser.sprites[0].rotation = Mathf.Lerp(lastRotation+180, rotation+180, timeStacker);
             sLeaser.sprites[0].color = Color.Lerp(Custom.HSL2RGB(Abstr.hue, Abstr.saturation, 0.55f), Color.blue, darkness);
 
             for (int a = 0; a < rect.corners.Length; a++)

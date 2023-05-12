@@ -13,6 +13,12 @@
     </Reference>
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>..\..\..\..\桌面\NaCIO\RW_ModStuff\TestMod-master\lib\UnityEngine.InputLegacyModule.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
   <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="Exists('$(RainWorldDir)')">
     <ItemGroup>
       <Assets Include="$(ProjectDir)../assets/**/*.*" />

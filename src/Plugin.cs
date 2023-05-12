@@ -87,8 +87,9 @@ namespace TestMod
 			
 
 			public Vector2 CollisionPos;
+			public Vector2 ReflectedNormal;
 
-			public float Ydifference; 
+			public Vector2 Push;
         }
 
 
@@ -101,110 +102,28 @@ namespace TestMod
 			Polygon poly1 = polygonA;
 			TilePolygon polyTile = polygonTile;
 			
-			//can swap the checking if polygon and tilepoly is same class(saves a lot of code) :{}
+			
+
 			for (int shape = 1; shape <= 2; shape++)
             {
 				if (shape == 1)
-                {
+				{
 					// Check diagonals of polygon...
 					for (int p = 0; p < poly1.corners.Length; p++)
-                    {
-						Vector2 line_r1s = poly1.center;
+					{
+						Vector2 line_r1s = poly1.center.pos;
 						Vector2 line_r1e = poly1.corners[p];
 
 
 						// ... against edges of other polygon
 						for (int q = 0; q < polyTile.corners.Length; q++)
-                        {
+						{
 							Vector2 line_r2s = polyTile.corners[q];
 							Vector2 line_r2e = polyTile.corners[(q + 1) % polyTile.corners.Length];
 
 							//Find two line intersect then filter out with AABB check :{}
 
-							float x1 = line_r1s.x;
-							float x2 = line_r1e.x;
-
-							float y1 = line_r1s.y;
-							float y2 = line_r1e.y;
-
-							float x3 = line_r2s.x;
-							float x4 = line_r2e.x;
-
-							float y3 = line_r2s.y;
-							float y4 = line_r2e.y;
-
-							float d = (x1-x2)*(y3-y4) - (y1-y2)*(x3-x4);
-
-							float px = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4))/d;
-							float py = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / d;
-							Vector2 CollisionPoint = new Vector2(px, py);
-							if(Helper.AABB(line_r1s,line_r1e,line_r2s,line_r2e,CollisionPoint)&&d!=0)
-							{
-								result.Intersect = true;
-								result.collisionTile = polyTile.center;
-								result.collidedSide = p;
-
-								result.line1 = new Vector2[2] { line_r1s, line_r1e };
-								result.line2=new Vector2[2] {line_r2s,line_r2e };
-								result.CollisionPos = new Vector2(px, py);
-								result.Ydifference = Math.Abs(py - poly1.corners[p].y);
-								return result;
-							}
-
-
-
-
-
-
-                            //i cant make this work :{}
-
-                            //// Standard line segment intersection (i dinked)
-                            //float h = (line_r2e.x - line_r2s.x) * (line_r1s.y - line_r1e.y) - (line_r1s.x - line_r1e.x) * (line_r2e.y - line_r2s.y);
-                            //float t1 = ((line_r2s.y - line_r2e.y) * (line_r1s.x - line_r2s.x) + (line_r2s.x - line_r2s.x) * (line_r1s.y - line_r2s.y)) / h;
-                            //float t2 = ((line_r1s.y - line_r1e.y) * (line_r1s.x - line_r2s.x) + (line_r1e.x - line_r1s.x) * (line_r1s.y - line_r2s.y)) / h;
-
-                            //if (t1 >= 0.0f && t1 < 1.0f && t2 >= 0.0f && t2 < 1.0f)
-                            //                     {
-                            //	result.Intersect = true;
-                            //	result.collisionTile = polyTile.center;
-                            //	result.collidedSide = q;
-                            //	return result;
-                            //}
-                        }
-                    }
-                }
-				else if (shape == 2)
-                {
-					// Check diagonals of polygon...
-					for (int p = 0; p < polyTile.corners.Length; p++)
-					{
-						Vector2 line_r1s = polyTile.center;
-						Vector2 line_r1e = polyTile.corners[p];
-
-						for (int q = 0; q < poly1.corners.Length; q++)
-						{
-							Vector2 line_r2s = poly1.corners[q] ; 
-                            Vector2 line_r2e = poly1.corners[(q + 1) % poly1.corners.Length];
-                            //Find two line intersect then filter out with AABB check :)
-
-
-                            float x1 = line_r1s.x;
-							float x2 = line_r1e.x;
-
-							float y1 = line_r1s.y;
-							float y2 = line_r1e.y;
-
-							float x3 = line_r2s.x;
-							float x4 = line_r2e.x;
-
-							float y3 = line_r2s.y;
-							float y4 = line_r2e.y;
-
-							float d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-
-							float px = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / d;
-							float py = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / d;
-							Vector2 CollisionPoint = new Vector2(px, py);
+							Vector2 CollisionPoint = Helper.LineCollide(line_r1s, line_r1e, line_r2s, line_r2e);
 							if (Helper.AABB(line_r1s, line_r1e, line_r2s, line_r2e, CollisionPoint))
 							{
 								result.Intersect = true;
@@ -213,37 +132,52 @@ namespace TestMod
 
 								result.line1 = new Vector2[2] { line_r1s, line_r1e };
 								result.line2 = new Vector2[2] { line_r2s, line_r2e };
-								result.CollisionPos = new Vector2(px, py);
-                                result.Ydifference = Math.Abs(py - polyTile.corners[1].y);
-                                //result.Ydifference = Math.Abs(py - poly1.corners[q].y);
-                                return result;
+								result.CollisionPos = CollisionPoint;
+								result.Push = Helper.PolyPushOutOfLine(line_r1s,line_r1s,line_r1e,line_r2s, line_r2e, polygonTile, velocity);
+								//result.Xdifference = Mathf.Abs((line_r1s.x < polyTile.corners[1].x ? line_r1s.x : line_r1e.x) - polyTile.corners[1].x);
+								result.ReflectedNormal=new Vector2(-(line_r2e-line_r2s).y,(line_r2e - line_r2s).x).normalized;
+								if(result.Push!=Vector2.zero)return result;
 							}
 
+						}
+					}
+				}
+				else if (shape == 20)
+				{
+					// Check diagonals of polygon...
+					for (int p = 0; p < polyTile.corners.Length; p++)
+					{
+                        Vector2 line_r1s = polyTile.center;
+                        Vector2 line_r1e = polyTile.corners[(p + 1) % polyTile.corners.Length];
 
-                            //https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
+                        for (int q = 0; q < poly1.corners.Length; q++)
+						{
+							Vector2 line_r2s = poly1.corners[q];
+							Vector2 line_r2e = poly1.corners[(q + 1) % poly1.corners.Length];
+							//Find two line intersect then filter out with AABB check :)
 
+							Vector2 CollisionPoint = Helper.LineCollide(line_r1s, line_r1e, line_r2s, line_r2e);
+							if (Helper.AABB(line_r1s, line_r1e, line_r2s, line_r2e, CollisionPoint))
+							{
+								result.Intersect = true;
+								result.collisionTile = polyTile.center;
+								result.collidedSide = p;
 
+								result.line1 = new Vector2[2] { line_r1s, line_r1e };
+								result.line2 = new Vector2[2] { line_r2s, line_r2e };
+								result.CollisionPos = CollisionPoint;
+								
+								//result.Ydifference = Math.Abs(py - poly1.corners[q].y);
+								return result;
+							}
 
+							//https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
 
-
-
-                            //i cant make this work :(
-
-                            //// Standard line segment intersection (i dinked)
-                            //float h = (line_r2e.x - line_r2s.x) * (line_r1s.y - line_r1e.y) - (line_r1s.x - line_r1e.x) * (line_r2e.y - line_r2s.y);
-                            //float t1 = ((line_r2s.y - line_r2e.y) * (line_r1s.x - line_r2s.x) + (line_r2s.x - line_r2s.x) * (line_r1s.y - line_r2s.y)) / h;
-                            //float t2 = ((line_r1s.y - line_r1e.y) * (line_r1s.x - line_r2s.x) + (line_r1e.x - line_r1s.x) * (line_r1s.y - line_r2s.y)) / h;
-
-                            //if (t1 >= 0.0f && t1 < 1.0f && t2 >= 0.0f && t2 < 1.0f)
-                            //                     {
-                            //	result.Intersect = true;
-                            //	result.collisionTile = polyTile.center;
-                            //	result.collidedSide = q;
-                            //	return result;
-                            //}
-                        }
-                    }
-                }
+						}
+					}
+				}
+			
+				
             }
 
 			return result;
@@ -251,7 +185,7 @@ namespace TestMod
 
 		private void BodyChunk_Update(On.BodyChunk.orig_Update orig, BodyChunk self)
 		{
-			orig(self);
+			
 			if (self.owner is Crate)
             {
 				//Debug.Log("Starting tile initialization Loop");
@@ -315,8 +249,7 @@ namespace TestMod
 						new Vector2(colRectDimensions[2],colRectDimensions[3]),
 
 					};
-					
-					
+									
 				}
 				RWCustom.IntVector2 startPoint = self.owner.room.GetTilePosition(new Vector2(colRectDimensions[0], colRectDimensions[1]));
 				RWCustom.IntVector2 dimensions = self.owner.room.GetTilePosition(new Vector2(colRectDimensions[2] - colRectDimensions[0], colRectDimensions[1] - colRectDimensions[3]));
@@ -326,11 +259,11 @@ namespace TestMod
 
 				Rect collisionDetector = new(startPoint.x, startPoint.y, dimensions.x, dimensions.y);
 				crate.rect.collisionContainer.Clear();
-				for (int i = 0; i < collisionDetector.width; i++)
+				for (int i = 0; i < collisionDetector.height; i++)
                 {
-					for (int a = 0; a < collisionDetector.height; a++)
+					for (int a = 0; a < collisionDetector.width; a++)
                     {
-						RWCustom.IntVector2 TilePos= new RWCustom.IntVector2(i + (int)collisionDetector.x, (int)collisionDetector.y - a);
+						RWCustom.IntVector2 TilePos= new RWCustom.IntVector2(a + (int)collisionDetector.x, (int)collisionDetector.y - i);
 
 						if (self.owner.room.GetTile(TilePos).Terrain == Room.Tile.TerrainType.Solid)
 						{
@@ -359,35 +292,34 @@ namespace TestMod
 					(self.owner as Crate).DebugSpr.Tiles = crate.rect.collisionContainer;
 
                 }
-                    //Debug.Log(crate.rect.collisionContainer.Count);
-                    //Debug.Log("Reached removal");
-                    //if (crate.rect.collisionContainer.Count > 0)
-                    //{
-                    //	for (int i = 0; i < crate.rect.collisionContainer.Count; i++)
-                    //	{
-                    //		TilePolygon temp = crate.rect.collisionContainer[i];
-                    //		Vector2 check = (temp.center / 20f)+new Vector2(10, 10);
-                    //		if (!collisionDetector.Contains(check))
-                    //		{
-                    //			//Debug.Log("removing");
-                    //			crate.rect.collisionContainer.RemoveAt(i);
-                    //			//Debug.Log("Finished removing");
-                    //		}
+                orig(self);
+                //if (crate.rect.collisionContainer.Count > 0)
+                //{
+                //	for (int i = 0; i < crate.rect.collisionContainer.Count; i++)
+                //	{
+                //		TilePolygon temp = crate.rect.collisionContainer[i];
+                //		Vector2 check = temp.center/20 ;
+                //		if (!collisionDetector.Contains(check))
+                //		{
+                //			//Debug.Log("removing");
+                //			crate.rect.collisionContainer.RemoveAt(i);
+                //			//Debug.Log("Finished removing");
+                //		}
 
-                    //	}
-                    //}
+                //	}
+                //}
 
 
-                    // Only use this log for debugging!!! This lags a LOT!!!!!
-                    /*
-                    Debug.Log(crate.rect.center / 20f);
-                    Debug.Log(crate.rect.collisionContainer.Count);
-                    foreach (TilePolygon p in crate.rect.collisionContainer)
-                    {
-                        Debug.Log("X: " + p.center.x + "   Y: " + p.center.y);
-                    }
-                    */
-                }
+                // Only use this log for debugging!!! This lags a LOT!!!!!
+                /*
+				Debug.Log(crate.rect.center / 20f);
+				Debug.Log(crate.rect.collisionContainer.Count);
+				foreach (TilePolygon p in crate.rect.collisionContainer)
+				{
+					Debug.Log("X: " + p.center.x + "   Y: " + p.center.y);
+				}
+				*/
+            }
 		}
 
 
@@ -421,22 +353,39 @@ namespace TestMod
 
 		private void BodyChunk_CheckVerticalCollision(On.BodyChunk.orig_CheckVerticalCollision orig, BodyChunk self)
 		{
-
+			bool bounced=false;
 			if (self.owner is Crate)
 			{
 				Crate crate = self.owner as Crate;
 
 				for (int i = 0; i < crate.rect.collisionContainer.Count; i++)
 				{
-					PolygonCollisionResult polygonCollisionResult = PolygonCollisionTile(crate.rect, crate.rect.collisionContainer[i], self.vel);
+                    
+                    PolygonCollisionResult polygonCollisionResult = PolygonCollisionTile(crate.rect, crate.rect.collisionContainer[i], self.vel);
 
                     if(DEBUGMODE) crate.DebugSpr.result = polygonCollisionResult;
                     if (polygonCollisionResult.Intersect)
 					{
-						self.pos += Vector2.up * polygonCollisionResult.Ydifference;
+						Debug.Log(polygonCollisionResult.Push);
+						self.pos += polygonCollisionResult.Push;
+
 						self.HardSetPosition(self.pos);
-						self.vel *= 0;
+						
+						if (!bounced)
+						{
+
+							self.vel = self.vel.magnitude*Vector2.Reflect(self.vel.normalized,polygonCollisionResult.ReflectedNormal) * 0.9f;//Vector2.Reflect(self.vel,polygonCollisionResult.ReflectedNormal)*0.6f ;
+
+        //                    if (polygonCollisionResult.Push.y != 0)
+								//self.vel.y *= -1  * 0.5f;
+        //                    if (polygonCollisionResult.Push.x != 0)
+        //                        self.vel.x *= -1  * 0.5f;
+
+							//self.vel*= -polygonCollisionResult.Push.normalized*0.4f;
+							bounced = true;
+						}
 						crate.rect.UpdateCornerPoints();
+						
 						//Debug.Log("Currently Colliding!!! With " + polygonCollisionResult.collisionTile);
 						//self.pos = self.lastPos;
 						if (polygonCollisionResult.collidedSide == 0)
@@ -460,7 +409,7 @@ namespace TestMod
 							//Debug.Log("Down collide tile");
                            
                         }
-						//return;  //breaks when found one colli
+						return;  //breaks when found one colli
 					}
 					else if (polygonCollisionResult.WillIntersect)
 					{

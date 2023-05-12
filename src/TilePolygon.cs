@@ -8,7 +8,7 @@ using RWCustom;
 
 namespace TestMod
 {
-    class TilePolygon : UpdatableAndDeletable, IDrawable
+    public class TilePolygon : UpdatableAndDeletable, IDrawable
     {
         public UnityEngine.Vector2 center;
         public UnityEngine.Vector2[] corners;
