@@ -81,8 +81,8 @@ namespace TestMod
             // Square
             
             origCorners[0] = new UnityEngine.Vector2(-1 / 2f, -1 / 2f); // Bottom Left
-            origCorners[1] = new UnityEngine.Vector2(-1 / 2f,4 / 2f); // Top Left
-            origCorners[2] = new UnityEngine.Vector2(1 / 2f, 4 / 2f); // Top Right
+            origCorners[1] = new UnityEngine.Vector2(-1 / 2f,1 / 2f); // Top Left
+            origCorners[2] = new UnityEngine.Vector2(1 / 2f, 1 / 2f); // Top Right
             origCorners[3] = new UnityEngine.Vector2(1 / 2f, -1 / 2f); // Bottom Right
 
             // Triangle needs some work with the allingement, but custom shapes work!
@@ -124,7 +124,7 @@ namespace TestMod
             rect.center = firstChunk;
             //rect.ChangeSize(85);
             //Debug.Log(rect.vel(1));
-            rect.UpdateCornerPointsWithAngle(20.5f);
+            rect.UpdateCornerPointsWithAngle(0f);
            
             //Debug.Log(rect.center.x + " " + rect.center.y);
 

@@ -108,23 +108,37 @@ namespace TestMod
                 int index = 0;
                 for (int i = TileSpr; i < TileSpr + TileLineCount; i = i + 4)
                 {
-                    for (int j = 0; j < 4; j++) {
+                    if (index < Tiles.Count)
+                    {
+                        for (int j = 0; j < Tiles[index].corners.Length; j++)
+                        {
 
-                        if (index < Tiles.Count)
-                        {
-                            sLeaser.sprites[i + j].SetPosition(Tiles[index].corners[j] + (Tiles[index].corners[(j + 1) % 4] - Tiles[index].corners[j]) / 2 - camPos);
-                            sLeaser.sprites[i + j].scaleX = 1;
-                            sLeaser.sprites[i + j].scaleY = Custom.Dist(Tiles[index].corners[(j + 1) % 4], Tiles[index].corners[j]);
-                            sLeaser.sprites[i + j].rotation = (j + 1) % 2 != 0 ? 0 : 90;
-                            sLeaser.sprites[i + j].isVisible = true;
-                        } else
-                        {
-                            sLeaser.sprites[i + j].isVisible = false;
+                            if (index < Tiles.Count)
+                            {
+                                sLeaser.sprites[i + j].SetPosition(Tiles[index].corners[j] - camPos + (Tiles[index].corners[(j + 1) % Tiles[index].corners.Length] - Tiles[index].corners[j]) / 2);
+                                sLeaser.sprites[i + j].scaleX = 3;
+                                sLeaser.sprites[i + j].scaleY = Custom.Dist(Tiles[index].corners[(j + 1) % Tiles[index].corners.Length], Tiles[index].corners[j]);
+                                sLeaser.sprites[i + j].rotation = Custom.AimFromOneVectorToAnother(Tiles[index].corners[j], Tiles[index].corners[(j + 1) % Tiles[index].corners.Length]);
+                                sLeaser.sprites[i + j].isVisible = true;
+                            }
+                            else
+                            {
+                                sLeaser.sprites[i + j].isVisible = false;
+                            }
                         }
                     }
                     index++;
                 }
+                Tiles = null;
             }
+            else
+            {
+                for (int i = TileSpr; i < TileSpr + TileSpriteCount; i++)
+                {
+                    sLeaser.sprites[i].isVisible = false;
+                }
+            }
+
             if (result.Intersect)
             {
 

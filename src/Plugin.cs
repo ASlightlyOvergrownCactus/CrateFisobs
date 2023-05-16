@@ -7,6 +7,8 @@ using Fisobs.Core;
 
 using BepInEx;
 using System.Security.Permissions;
+using static TestMod.Plugin;
+using TestMod;
 
 // IMPORTANT
 // This requires Fisobs to work!
@@ -234,10 +236,10 @@ namespace TestMod
 					}
 				}
 
-				colRectDimensions[0] -= 40f;//x y x y
-				colRectDimensions[1] += 40f;
-				colRectDimensions[2] += 40f;
-				colRectDimensions[3] -= 40f;
+				colRectDimensions[0] -= 80f;//x y x y
+				colRectDimensions[1] += 80f;
+				colRectDimensions[2] += 80f;
+				colRectDimensions[3] -= 80f;
 
 				if (DEBUGMODE) 
 				{
@@ -259,6 +261,8 @@ namespace TestMod
 
 				Rect collisionDetector = new(startPoint.x, startPoint.y, dimensions.x, dimensions.y);
 				crate.rect.collisionContainer.Clear();
+				List<TilePolygon> AllTile = new List<TilePolygon>();
+				 
 				for (int i = 0; i < collisionDetector.height; i++)
                 {
 					for (int a = 0; a < collisionDetector.width; a++)
@@ -281,13 +285,21 @@ namespace TestMod
 							}
 							if (!flag)
 							{
+
 								//Debug.Log("Tile added to list");
-								crate.rect.collisionContainer.Add(new TilePolygon(TilePos.ToVector2()*20 + new Vector2(10, 10)));
+								AllTile.Add( new TilePolygon(TilePos.ToVector2()*20 + new Vector2(10, 10), TilePolygon.DefaultShape.Square) ) ;
 							}
 						}
 					}
                 }
-				if (DEBUGMODE)
+				if (AllTile.Count > 0)
+				{
+					AllTile = PolygonMerger.Merge(AllTile);
+					foreach (TilePolygon p in AllTile) { crate.rect.collisionContainer.Add(p); };
+				}
+				
+
+                if (DEBUGMODE)
 				{
 					(self.owner as Crate).DebugSpr.Tiles = crate.rect.collisionContainer;
 
@@ -353,39 +365,30 @@ namespace TestMod
 
 		private void BodyChunk_CheckVerticalCollision(On.BodyChunk.orig_CheckVerticalCollision orig, BodyChunk self)
 		{
-			bool bounced=false;
-			if (self.owner is Crate)
+			bool willbounced=false;
+			PolygonCollisionResult polygonCollisionResult= new PolygonCollisionResult();
+
+            if (self.owner is Crate)
 			{
 				Crate crate = self.owner as Crate;
 
 				for (int i = 0; i < crate.rect.collisionContainer.Count; i++)
 				{
                     
-                    PolygonCollisionResult polygonCollisionResult = PolygonCollisionTile(crate.rect, crate.rect.collisionContainer[i], self.vel);
+                     polygonCollisionResult = PolygonCollisionTile(crate.rect, crate.rect.collisionContainer[i], self.vel);
 
                     if(DEBUGMODE) crate.DebugSpr.result = polygonCollisionResult;
                     if (polygonCollisionResult.Intersect)
-					{
-						Debug.Log(polygonCollisionResult.Push);
-						self.pos += polygonCollisionResult.Push;
+					{	
+						//willbounced = true;
+						//Debug.Log(polygonCollisionResult.Push);
+						//self.pos += polygonCollisionResult.Push;
 
-						self.HardSetPosition(self.pos);
+						//self.HardSetPosition(self.pos);
+											
+						//crate.rect.UpdateCornerPoints();
 						
-						if (!bounced)
-						{
 
-							self.vel = self.vel.magnitude*Vector2.Reflect(self.vel.normalized,polygonCollisionResult.ReflectedNormal) * 0.9f;//Vector2.Reflect(self.vel,polygonCollisionResult.ReflectedNormal)*0.6f ;
-
-        //                    if (polygonCollisionResult.Push.y != 0)
-								//self.vel.y *= -1  * 0.5f;
-        //                    if (polygonCollisionResult.Push.x != 0)
-        //                        self.vel.x *= -1  * 0.5f;
-
-							//self.vel*= -polygonCollisionResult.Push.normalized*0.4f;
-							bounced = true;
-						}
-						crate.rect.UpdateCornerPoints();
-						
 						//Debug.Log("Currently Colliding!!! With " + polygonCollisionResult.collisionTile);
 						//self.pos = self.lastPos;
 						if (polygonCollisionResult.collidedSide == 0)
@@ -409,7 +412,7 @@ namespace TestMod
 							//Debug.Log("Down collide tile");
                            
                         }
-						return;  //breaks when found one colli
+						//return;  //breaks when found one colli
 					}
 					else if (polygonCollisionResult.WillIntersect)
 					{
@@ -417,8 +420,21 @@ namespace TestMod
                       
                     }
 				}
-				
-			}
+
+                if (willbounced)
+                {
+
+                    self.vel = self.vel.magnitude * Vector2.Reflect(self.vel.normalized, polygonCollisionResult.ReflectedNormal) * 1f;//Vector2.Reflect(self.vel,polygonCollisionResult.ReflectedNormal)*0.6f ;
+
+                    //                    if (polygonCollisionResult.Push.y != 0)
+                    //self.vel.y *= -1  * 0.5f;
+                    //                    if (polygonCollisionResult.Push.x != 0)
+                    //                        self.vel.x *= -1  * 0.5f;
+
+                    //self.vel*= -polygonCollisionResult.Push.normalized*0.4f;
+                   
+                }
+            }
 			else
 			{
 				orig(self);

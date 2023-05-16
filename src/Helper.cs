@@ -18,7 +18,7 @@ namespace TestMod
         }
         public static bool IsBetween(float a, float b,float c)
         {
-            return (a <= b && b <= c)|| (c <= b && b <= a);
+            return (a <= b && b <= c)|| (c < b && b < a);
         }
 
         public static bool AABB(Vector2 Line1a,Vector2 Line1b,Vector2 Line2a,Vector2 Line2b,Vector2 p)
@@ -90,62 +90,161 @@ namespace TestMod
            
             Vector2[] PushPoint = new Vector2[2] { Vector2.one*10000, Vector2.one * 10000 };
 
-           //Vertical Slope=0 Horizontal Slope =2
-            if (p3.x - p4.x == 0)
+            //Vertical Slope=0 Horizontal Slope =2
+            //case one
+            if ((velocity.x - velocity.x != 0 && velocity.y - velocity.y != 0))
             {
-                if (velocity.x > 0)
+                if (p3.x - p4.x == 0)
                 {
-                    if (p1.x > p2.x)
+                    if (velocity.x > 0)
                     {
-                        return new Vector2(p3.x - p1.x, 0);
-                    }
-                    else
-                    {
-                        return new Vector2(p3.x - p2.x, 0);
-                    }
-                }
-                else if (velocity.x < 0)
-                {
-                    if (p1.x < p2.x)
-                    {
-                        return new Vector2(p3.x - p1.x, 0);
-                    }
-                    else
-                    {
-                        return new Vector2(p3.x - p2.x, 0);
-                    }
-                }
+                        
+                        if (p1.x > p2.x)
+                        {
+                            float slope = (velocity.y / velocity.x);
+                            float c = p1.y - p1.x * slope;
 
-            }
-            else if (p3.y - p4.y == 0)
+                            return new Vector2(p3.x, slope*p3.x+c)-p1;
+                        }
+                        else
+                        {
+                            float slope = (velocity.y / velocity.x);
+                            float c = p2.y - p2.x * slope;
+
+                            return new Vector2(p3.x, slope*p3.x+c)-p2;
+                        }
+                    }
+                    else if (velocity.x < 0)
+                    {
+                        if (p1.x < p2.x)
+                        {
+                            float slope = (velocity.y / velocity.x);
+                            float c = p1.y - p1.x * slope;
+
+                            return p1-new Vector2(p3.x, slope * p3.x + c);
+                        }
+                        else
+                        {
+                            float slope = (velocity.y / velocity.x);
+                            float c = p2.y - p2.x * slope;
+
+                            return p2- new Vector2(p3.x, slope * p3.x + c) ;
+                        }
+                    }
+                }
+                else if (p3.y - p4.y == 0)
+                {
+                    if (velocity.y > 0)
+                    {
+                        if (p1.y > p2.y)
+                        {
+                            float slope = (velocity.y / velocity.x);
+                            float c = p1.y - p1.x * slope;
+
+                            return new Vector2((p3.y-c)/slope,p3.y) - p1;
+
+                        }
+                        else
+                        {
+                            float slope = (velocity.y / velocity.x);
+                            float c = p2.y - p2.x * slope;
+
+                            return new Vector2((p3.y - c) / slope, p3.y) - p2;
+                        }
+                    }
+                    else if (velocity.y < 0)
+                    {
+                        if (p1.y < p2.y)
+                        {
+                            float slope = (velocity.y / velocity.x);
+                            float c = p1.y - p1.x * slope;
+
+                            return p1-new Vector2((p3.y - c) / slope, p3.y) ;
+
+                        }
+                        else
+                        {
+                            float slope = (velocity.y / velocity.x);
+                            float c = p2.y - p2.x * slope;
+
+                            return p2 -new Vector2((p3.y - c) / slope, p3.y);
+                        }
+                    }
+                }
+            } else
             {
-                if (velocity.y > 0)
-                {
-                    if (p1.y > p2.y)
-                    {
-                        return new Vector2(0, p3.y - p1.y);
+                //case2
 
-                    }
-                    else
+                if (p3.x - p4.x == 0)
+                {
+                    if (velocity.x > 0)
                     {
-                        return new Vector2(0, p3.y - p2.y);
+                        if (p1.x > p2.x)
+                        {
+                            return new Vector2(p3.x - p1.x, 0);
+                        }
+                        else
+                        {
+                            return new Vector2(p3.x - p2.x, 0);
+                        }
                     }
+                    else if (velocity.x < 0)
+                    {
+                        if (p1.x < p2.x)
+                        {
+                            return new Vector2(p3.x - p1.x, 0);
+                        }
+                        else
+                        {
+                            return new Vector2(p3.x - p2.x, 0);
+                        }
+                    } else if (velocity.x == 0 && velocity.y != 0)
+                    {
+                        float pointy = velocity.y > 0 ? p3.y < p4.y ? p3.y : p4.y : p3.y > p4.y ? p3.y : p4.y;
+                        float closey = velocity.y > 0 ? p1.y > p2.y ? p1.y : p2.y : p1.y < p2.y ? p1.y : p2.y;
+                        return new Vector2(0, -Math.Sign(velocity.y) * Mathf.Abs(pointy - closey));
+                    }
+
                 }
-                else if (velocity.y < 0)
+                else if (p3.y - p4.y == 0)
                 {
-                    if (p1.y < p2.y)
+                    if (velocity.y > 0)
                     {
-                        return new Vector2(0, p3.y - p1.y);
+                        if (p1.y > p2.y)
+                        {
+                            return new Vector2(0, p3.y - p1.y);
 
+                        }
+                        else
+                        {
+                            return new Vector2(0, p3.y - p2.y);
+                        }
                     }
-                    else
+                    else if (velocity.y < 0)
                     {
-                        return new Vector2(0, p3.y - p2.y);
+                        if (p1.y < p2.y)
+                        {
+                            return new Vector2(0, p3.y - p1.y);
+
+                        }
+                        else
+                        {
+                            return new Vector2(0, p3.y - p2.y);
+                        }
+                    }
+                    else if (velocity.y == 0 && velocity.x != 0)
+                    {
+                        float pointy = velocity.x > 0 ? p3.x < p4.x ? p3.x : p4.x : p3.x > p4.x ? p3.x : p4.x;
+                        float closey = velocity.x > 0 ? p1.x > p2.x ? p1.x : p2.x : p1.x < p2.x ? p1.x : p2.x;
+                        return new Vector2(-Math.Sign(velocity.x) * Mathf.Abs(pointy - closey), 0);
                     }
                 }
             }
 
-    
+
+
+
+            // case 3
             int velocityQuadrant = VeloInSlopequadrant(p3, p4, velocity);
 
 

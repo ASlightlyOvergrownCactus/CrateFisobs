@@ -12,16 +12,17 @@ namespace TestMod
     {
         public UnityEngine.Vector2 center;
         public UnityEngine.Vector2[] corners;
-        private List<Vector2> edges = new List<Vector2>();
+        public List<Edge> edges = new List<Edge>();
 
         // For tiles
-        public TilePolygon(Vector2 center)
+        public TilePolygon(Vector2 center,DefaultShape DF, Vector2[]corners=null)
         {
             //Debug.Log("reached tile polygon cons");
             this.center = center;
-            corners = new Vector2[4] { new Vector2(center.x - 10, center.y - 10), new Vector2(center.x - 10, center.y + 10), new Vector2(center.x + 10, center.y + 10), new Vector2(center.x + 10, center.y - 10) };
+            if (DF==DefaultShape.Square) this.corners = new Vector2[4] { new Vector2(center.x - 10, center.y - 10), new Vector2(center.x - 10, center.y + 10), new Vector2(center.x + 10, center.y + 10), new Vector2(center.x + 10, center.y - 10) };
+            if (DF==DefaultShape.others) this.corners=corners;
             //Debug.Log("Finished tile cons");
-            edges = new List<Vector2>();
+            edges = new List<Edge>();
 
 
             // Define edges
@@ -35,16 +36,9 @@ namespace TestMod
             Edges.Clear();
             for (int i = 0; i < corners.Length; i++)
             {
-                p1 = new Vector2(corners[i].x, corners[i].y);
-                if (i + 1 >= corners.Length)
-                {
-                    p2 = new Vector2(corners[0].x, corners[0].y);
-                }
-                else
-                {
-                    p2 = new Vector2(corners[i + 1].x, corners[i + 1].y);
-                }
-                edges.Add(p2 - p1);
+                p1 = corners[i];
+                p2= corners[(i+1)%corners.Length];
+                edges.Add(new Edge(p1,p2));
             }
         }
 
@@ -92,9 +86,29 @@ namespace TestMod
                 newContainer.AddChild(fsprite);
         }
 
-        public List<Vector2> Edges
+        public List<Edge> Edges
         {
             get { return edges; }
+        }
+
+        public enum DefaultShape
+        {
+            Square,
+            others
+        }
+        public class Edge
+        {
+           public Vector2 p1;
+            public Vector2 p2;
+            public Edge(Vector2 p1, Vector2 p2) { this.p1 = p1; this.p2 = p2;}
+            public bool Equal (Edge e)
+            {
+                if ((e.p1 == this.p1&&e.p2==this.p2)||(e.p2==this.p1&&e.p1==this.p2))
+                {
+                    return true;
+                }
+                return false;
+            }
         }
     }
 }
