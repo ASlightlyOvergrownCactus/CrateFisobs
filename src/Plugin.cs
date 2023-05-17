@@ -304,7 +304,7 @@ namespace TestMod
 					(self.owner as Crate).DebugSpr.Tiles = crate.rect.collisionContainer;
 
                 }
-                orig(self);
+               
                 //if (crate.rect.collisionContainer.Count > 0)
                 //{
                 //	for (int i = 0; i < crate.rect.collisionContainer.Count; i++)
@@ -332,7 +332,8 @@ namespace TestMod
 				}
 				*/
             }
-		}
+            orig(self);
+        }
 
 
 		private void BodyChunk_CheckHorizontalCollision(On.BodyChunk.orig_CheckHorizontalCollision orig, BodyChunk self)
@@ -365,12 +366,13 @@ namespace TestMod
 
 		private void BodyChunk_CheckVerticalCollision(On.BodyChunk.orig_CheckVerticalCollision orig, BodyChunk self)
 		{
-			bool willbounced=false;
-			PolygonCollisionResult polygonCollisionResult= new PolygonCollisionResult();
+			
 
             if (self.owner is Crate)
 			{
-				Crate crate = self.owner as Crate;
+                bool willbounced = false;
+                PolygonCollisionResult polygonCollisionResult = new PolygonCollisionResult();
+                Crate crate = self.owner as Crate;
 
 				for (int i = 0; i < crate.rect.collisionContainer.Count; i++)
 				{
