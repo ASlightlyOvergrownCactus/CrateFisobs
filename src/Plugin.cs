@@ -29,12 +29,12 @@ namespace TestMod
 	// See https://rainworldmodding.miraheze.org/wiki/Downpour_Reference/Mod_Directories
 
 	[BepInPlugin("cactus.testMod", "Test Mod - Crate", "0.1.0")]
-	sealed class Plugin : BaseUnityPlugin
+	public class Plugin : BaseUnityPlugin
 	{
 		public Vector2 pivot;
 		public float rotationInDegrees;
 
-		public static bool DEBUGMODE = true;
+		public static bool DEBUGMODE = false;
 		public void OnEnable()
 		{
 			// How to make a hook:
@@ -52,7 +52,7 @@ namespace TestMod
 
 			On.BodyChunk.ctor += BodyChunk_ctor;
 			On.BodyChunk.Update += BodyChunk_Update;
-			//On.RoomCamera.SpriteLeaser.ctor += SpriteLeaser_ctor;
+			
 			On.BodyChunk.CheckHorizontalCollision += BodyChunk_CheckHorizontalCollision;
 			On.BodyChunk.CheckVerticalCollision += BodyChunk_CheckVerticalCollision;
 		}
@@ -113,7 +113,7 @@ namespace TestMod
 					// Check diagonals of polygon...
 					for (int p = 0; p < poly1.corners.Length; p++)
 					{
-						Vector2 line_r1s = poly1.center.pos;
+						Vector2 line_r1s = poly1.pos;
 						Vector2 line_r1e = poly1.corners[p];
 
 
@@ -229,10 +229,10 @@ namespace TestMod
 		private void BodyChunk_Update(On.BodyChunk.orig_Update orig, BodyChunk self)
 		{
 			
-			if (self.owner is Crate)
+			if (self is Polygon)
             {
 				//Debug.Log("Starting tile initialization Loop");
-				var crate = self.owner as Crate;
+				Crate? crate = self.owner as Crate;
 
 				float[] colRectDimensions = new float[4];
 
@@ -352,10 +352,32 @@ namespace TestMod
                         }
 					}
                 }
-				if (AllTile.Count > 0)
+
+              
+
+                if (AllTile.Count > 0)
 				{
 					AllTile = PolygonMerger.Merge(AllTile);
-					foreach (TilePolygon p in AllTile) { crate.rect.collisionContainer.Add(p); };
+
+                    for (int i = 0; i < self.owner.room.physicalObjects.Length; i++)
+                    {
+                        for (int n = 0; n < self.owner.room.physicalObjects[i].Count; n++)
+                        {
+                            for (int m = 0; m < self.owner.room.physicalObjects[i][n].bodyChunks.Length; m++)
+                            {
+                                BodyChunk TargetChunk = self.owner.room.physicalObjects[i][n].bodyChunks[m];
+                                if (TargetChunk is Polygon && TargetChunk != self)
+                                {
+
+                                    Vector2[] v2 = (self.owner.room.physicalObjects[i][n].bodyChunks[m] as Polygon)?.corners;
+                                    AllTile.Add(new TilePolygon(self.owner.room.physicalObjects[i][n].bodyChunks[m].pos, TilePolygon.DefaultShape.others, (self.owner.room.physicalObjects[i][n].bodyChunks[m] as Polygon)?.corners));
+
+                                }
+                            }
+                        }
+                    }
+					//Temp solution, will change to better one later
+                    foreach (TilePolygon p in AllTile) { crate.rect.collisionContainer.Add(p); };
 				}
 
 
@@ -398,7 +420,7 @@ namespace TestMod
 
 		private void BodyChunk_CheckHorizontalCollision(On.BodyChunk.orig_CheckHorizontalCollision orig, BodyChunk self)
 		{
-			if (self.owner is Crate)
+			if (self is Polygon)
 			{
 				//self.CheckVerticalCollision();
 				//var crate = self.owner as Crate;
@@ -428,33 +450,31 @@ namespace TestMod
 		{
 			
 
-            if (self.owner is Crate)
+            if (self is Polygon)
 			{
                 bool willbounced = false;
                 PolygonCollisionResult polygonCollisionResult = new PolygonCollisionResult();
-                Crate crate = self.owner as Crate;
+               
 
-				for (int i = 0; i < crate.rect.collisionContainer.Count; i++)
+				for (int i = 0; i < (self as Polygon).collisionContainer.Count; i++)
 				{
                     
-                     polygonCollisionResult = PolygonCollisionTile(crate.rect, crate.rect.collisionContainer[i], self.vel);
+                     polygonCollisionResult = PolygonCollisionTile((self as Polygon), (self as Polygon).collisionContainer[i], self.vel);
 
-                    if(DEBUGMODE) crate.DebugSpr.result = polygonCollisionResult;
+                    if(DEBUGMODE) ((self as Polygon).owner as Crate).DebugSpr.result = polygonCollisionResult;
                     if (polygonCollisionResult.Intersect)
 					{
 						willbounced = true;
-						Debug.Log(polygonCollisionResult.Push);
-						;
+						//Debug.Log(polygonCollisionResult.Push);
+
 
 						self.HardSetPosition(self.pos + polygonCollisionResult.Push);
-						//crate.rect.center.pos = polygonCollisionResult.CollisionPos;
-						//crate.rect.angleDeg += 2;
-						crate.rect.UpdateCornerPoints();
+
+                        (self as Polygon).UpdateCornerPoints();
 
 
 
-						//Debug.Log("Currently Colliding!!! With " + polygonCollisionResult.collisionTile);
-						//self.pos = self.lastPos;
+
 						if (polygonCollisionResult.collidedSide == 0)
                         {
 							//Debug.Log("Left collide tile");
@@ -476,7 +496,7 @@ namespace TestMod
 							//Debug.Log("Down collide tile");
                            
                         }
-						i = 0;
+						
 						break;  //breaks when found one colli
 					}
 					else if (polygonCollisionResult.WillIntersect)

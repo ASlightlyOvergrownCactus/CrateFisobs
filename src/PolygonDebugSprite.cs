@@ -11,7 +11,7 @@ using UnityEngine.PlayerLoop;
 namespace TestMod
 {
 
-    class PolygonDebugSprite : CosmeticSprite
+    public class PolygonDebugSprite : CosmeticSprite
     {
         public Plugin.PolygonCollisionResult result;
         public Vector2[] ColliSquare;
@@ -23,7 +23,6 @@ namespace TestMod
         public PolygonDebugSprite(Polygon owner)
         {
             this.Owner = owner;
-
 
         }
 

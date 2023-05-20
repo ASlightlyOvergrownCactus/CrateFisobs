@@ -6,11 +6,15 @@ using System.Threading.Tasks;
 using UnityEngine;
 using System.Drawing.Drawing2D;
 using RWCustom;
+using static TestMod.Plugin;
+using System.Runtime.CompilerServices;
+using UnityEngine.PlayerLoop;
+
 namespace TestMod
 {
-    public class Polygon
+    public class Polygon:BodyChunk
     {
-        public BodyChunk center;
+        
         public Vector2 PivotPoint;
         public UnityEngine.Vector2[] corners;
         public UnityEngine.Vector2[] lastcorners;
@@ -24,9 +28,14 @@ namespace TestMod
 
      
 
-        public Polygon(BodyChunk center, float width, float height, Vector2[] origCorners)
+        public Polygon(PhysicalObject owner,int index, float width, float height,float mass, Vector2[] origCorners)
+            :base(owner,index,Vector2.zero,rad:0,mass)
         {
-            this.center = center;
+          
+
+
+
+           
             this.width = width;
             this.height = height;
             originalCorners = origCorners;
@@ -35,14 +44,15 @@ namespace TestMod
             lastlastcorners = new UnityEngine.Vector2[originalCorners.Length];
             edges = new List<Edge>();
             UpdateCornerPoints();
-            angleDeg = 1f;
+            angleDeg = 0f;
             Debug.Log("Adding actual polygon list!");
             collisionContainer = new List<TilePolygon>();
             
         }
-        public Polygon(BodyChunk center, float scale, int NumberOfPoint,float ang=0)
+        public Polygon(PhysicalObject owner, int index, float scale, float mass, int NumberOfPoint,float ang=0)
+             :base(owner, index, Vector2.zero, rad:0.1f,mass)
         {
-            this.center = center;
+            
             this.width = scale;
             this.height = scale;
             this.angleDeg = ang;
@@ -60,14 +70,15 @@ namespace TestMod
             
         }
 
-        public Vector2 vel(int corner)
+      
+        public Vector2 velocity(int corner)
         {
             return this.lastcorners[corner] -this.corners[corner];
         }
 
         public void Move(UnityEngine.Vector2 velocity)
         {
-            center.vel += velocity * Time.deltaTime;
+            this.vel += velocity * Time.deltaTime;
         }
         public void ChangeSize(float s)
         {
@@ -100,10 +111,12 @@ namespace TestMod
             for (int i = 0; i < corners.Length; i++)
             {
                 corners[i] = Custom.RotateAroundOrigo(corners[i], angleDeg);
-                corners[i] += center.pos+center.vel;
+                corners[i] += this.pos+this.vel;
             }
             BuildEdges();
         }
+
+        
 
         //public void UpdateCornerPointsGrip(Vector2 gripPos)
         //{
@@ -156,7 +169,7 @@ namespace TestMod
             for (int i = 0; i < corners.Length; i++)
             {
                 corners[i] = Custom.RotateAroundOrigo(corners[i], angleDeg);
-                corners[i] += center.pos + center.vel;
+                corners[i] += this.pos + this.vel;
 
             }
            
@@ -171,6 +184,10 @@ namespace TestMod
                 edges.Add(new Edge(corners[i], corners[(i+1)% corners.Length]));
             }
         }
+
+
+      
+
 
         public List<Edge> Edges
         {
