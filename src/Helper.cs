@@ -24,7 +24,7 @@ namespace TestMod
         public static bool AABB(Vector2 Line1a,Vector2 Line1b,Vector2 Line2a,Vector2 Line2b,Vector2 p)
         {
             //some small margin #BandageFix
-            float Margin = 0f;
+            float Margin = 0.01f;
             Vector2 TopLeftA = new Vector2(Math.Min(Line1a.x, Line1b.x)- Margin, Math.Max(Line1a.y,Line1b.y)+ Margin);
             Vector2 RightDownA=new Vector2(Math.Max(Line1a.x, Line1b.x)+ Margin, Math.Min(Line1a.y, Line1b.y)- Margin);
 
@@ -453,8 +453,26 @@ namespace TestMod
         //{
 
         //}
-       
+        public static bool IsPointInPoly(Vector2 point, Polygon poly)
+        {
+            int counter = 0;
+            for (int i = 0; i < poly.Edges.Count; i++)
+            {
+                Polygon.Edge e = poly.Edges[i];
+                
+               if(point.y < e.p1.y != point.y < e.p2.y)
+                {
+                    if(e.p1.x==e.p2.x&&e.p2.x==point.x) { return true; }  
+                    
+                        float slope = (e.p1.y-e.p2.y)/(e.p1.x-e.p2.x);
+                        float c = e.p1.y - e.p1.x * slope;
+                        if ( point.x<e.p1.x+((point.y-e.p1.y)/(e.p2.y-e.p1.y))*(e.p2.x-e.p1.x))
+                        {
+                            counter++;
+                        }            
+                }
+            }
+            return counter%2==1;
+        }
     }
-
-
 }

@@ -176,7 +176,7 @@ namespace TestMod
                 }
             }
             
-            for(int i = 0; i<Timer.Count;i++)
+            for(int i = 0; i<Timer.Count-1;i++)
             {
                 sLeaser.sprites[ExtraDebugPixelSpr+i].SetPosition(Timer[i].Pos);
                 sLeaser.sprites[ExtraDebugPixelSpr + i].rotation=Timer[i].Rotation;
@@ -210,7 +210,7 @@ namespace TestMod
             Timer.Add(new EXDebugSprite(pos));
         }
 
-        public void DrawADot(Vector2 pos1,Vector2 pos2, float Duration = 0)
+        public void DrawALine(Vector2 pos1,Vector2 pos2, float Duration = 0)
         {
             if (Timer.Count > ExtraDebugPixelCount) { return; }
             Timer.Add(new EXDebugSprite(pos1,pos2));

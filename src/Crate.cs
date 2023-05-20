@@ -26,7 +26,7 @@ namespace TestMod
         public Crate(CrateAbstract abstr) : base(abstr)
         {
            
-            rad = 30f;
+            rad = 50f;
             Debug.Log("Initializing Crate Object!");
             float mass = 10f;
             Abstr = abstr;
@@ -45,7 +45,7 @@ namespace TestMod
             // Create all body chunks
             for(int i = 0; i < bodyChunks.Length; i++)
             {
-                bodyChunks[i] = new BodyChunk(this, i, new Vector2(), 1f, mass / bodyChunks.Length);
+                bodyChunks[i] = new BodyChunk(this, i, new Vector2(), 10f, mass / bodyChunks.Length);
             }
 
             bodyChunkConnections = new BodyChunkConnection[bodyChunks.Length * (bodyChunks.Length - 1) / 2];
@@ -63,7 +63,7 @@ namespace TestMod
 
 
             airFriction = 0.999f;
-            gravity = 0f;
+            gravity = 0.7f;
             bounce = 0.3f;
             surfaceFriction = 1f;
             collisionLayer = 1;
@@ -124,8 +124,11 @@ namespace TestMod
             rect.center = firstChunk;
             //rect.ChangeSize(85);
             //Debug.Log(rect.vel(1));
-            rect.UpdateCornerPointsWithAngle(0f);
-           
+
+            rect.UpdateCornerPoints();
+
+            //rect.UpdateCornerPointsGrip(new Vector2(250, 250));
+            //rect.angleDeg += 2;
             //Debug.Log(rect.center.x + " " + rect.center.y);
 
 
@@ -234,7 +237,7 @@ namespace TestMod
             {
                 var spr = sLeaser.sprites[i];
                 spr.SetPosition(bodyChunks[i].pos + bodyChunks[i].vel - camPos);
-                spr.scale = rect.width/10;
+                spr.scale = rect.width/20;
             }
 
             for (int a = 0; a < rect.corners.Length; a++)

@@ -19,8 +19,31 @@ namespace TestMod
         {
             //Debug.Log("reached tile polygon cons");
             this.center = center;
-            if (DF==DefaultShape.Square) this.corners = new Vector2[4] { new Vector2(center.x - 10, center.y - 10), new Vector2(center.x - 10, center.y + 10), new Vector2(center.x + 10, center.y + 10), new Vector2(center.x + 10, center.y - 10) };
-            if (DF==DefaultShape.others) this.corners=corners;
+            
+      
+            switch(DF)
+            {
+                case DefaultShape.LeftUp:
+                    this.corners = new Vector2[3] { new Vector2(center.x - 10, center.y - 10), new Vector2(center.x + 10, center.y + 10), new Vector2(center.x + 10, center.y - 10) };
+                    break;
+
+                case DefaultShape.RightUp:
+                    this.corners = new Vector2[3] { new Vector2(center.x - 10, center.y - 10), new Vector2(center.x - 10,center.y+10), new Vector2(center.x + 10, center.y - 10) };
+                    break;
+
+                case DefaultShape.LeftDown:
+                    this.corners = new Vector2[3] {  new Vector2(center.x - 10, center.y + 10), new Vector2(center.x + 10, center.y + 10), new Vector2(center.x + 10, center.y - 10) };
+                    break;
+                case DefaultShape.RightDown:
+                    this.corners = new Vector2[3] { new Vector2(center.x - 10, center.y - 10), new Vector2(center.x - 10, center.y + 10),  new Vector2(center.x + 10, center.y - 10) };
+                    break;
+                case DefaultShape.Square:
+                    this.corners = new Vector2[4] { new Vector2(center.x - 10, center.y - 10), new Vector2(center.x - 10, center.y + 10), new Vector2(center.x + 10, center.y + 10), new Vector2(center.x + 10, center.y - 10) };
+                    break;
+                case DefaultShape.others:
+                        this.corners = corners;
+                        break;
+            }
             //Debug.Log("Finished tile cons");
             edges = new List<Edge>();
 
@@ -94,6 +117,10 @@ namespace TestMod
         public enum DefaultShape
         {
             Square,
+            LeftUp,
+            RightUp,
+            LeftDown,
+            RightDown,
             others
         }
         public class Edge

@@ -61,8 +61,6 @@ namespace TestMod
                     {
 
                         (OutLine[i + 1], OutLine[p]) = (OutLine[p], OutLine[i + 1]);
-
-
                         break;
                     }
                 }
@@ -74,7 +72,7 @@ namespace TestMod
             
             for(int i=0;i<OutLine.Count;i++)
             {
-                vector2s.Add( OutLine[i].p1);
+                vector2s.Add(OutLine[i].p1);
                 vector2s.Add(OutLine[i].p2);
                
             }
@@ -104,41 +102,40 @@ namespace TestMod
 
 
 
-                for (int i = 0; i < l2.Count; i++)
-                {
-                    List<Vector2> SameX = new List<Vector2>();
-                    List<Vector2> SameY = new List<Vector2>();
+                //for (int i = 0; i < l2.Count; i++)
+                //{
+                //    List<Vector2> SameX = new List<Vector2>();
+                //    List<Vector2> SameY = new List<Vector2>();
 
-                    int num = 1;
-                    while (l2[(i + num) % l2.Count].x == l2[i].x)
-                    {
+                //    int num = 1;
+                //    while (l2[(i + num) % l2.Count].x == l2[i].x)
+                //    {
+                //        SameX.Add(l2[(i + num) % l2.Count]);
+                //        num++;
 
-                        SameX.Add(l2[(i + num) % l2.Count]);
-                        num++;
+                //    }
 
-                    }
+                //    if (SameX.Count >= 1) SameX.RemoveAt(SameX.Count - 1);
+                //    num = 1;
+                //    while (l2[(i + num) % l2.Count].y == l2[i].y)
+                //    {
 
-                    if (SameX.Count >= 1) SameX.RemoveAt(SameX.Count - 1);
-                    num = 1;
-                    while (l2[(i + num) % l2.Count].y == l2[i].y)
-                    {
+                //        SameY.Add(l2[(i + num) % l2.Count]);
+                //        num++;
 
-                        SameY.Add(l2[(i + num) % l2.Count]);
-                        num++;
+                //    }
+                //    if (SameY.Count >= 1) SameY.RemoveAt(SameY.Count - 1);
+                //    if (SameX.Count >= 1 || SameY.Count >= 1)
+                //    {
 
-                    }
-                    if (SameY.Count >= 1) SameY.RemoveAt(SameY.Count - 1);
-                    if (SameX.Count >= 1 || SameY.Count >= 1)
-                    {
+                //        foreach (Vector2 v in SameX.Count >= 1 ? SameX : SameY)
+                //        {
+                //            l2.Remove(v);
+                //        }
+                //      //  i = 0;
+                //    }
+                //}
 
-                        foreach (Vector2 v in SameX.Count >= 1 ? SameX : SameY)
-                        {
-
-                            l2.Remove(v);
-                        }
-                      //  i = 0;
-                    }
-                }
                 tp.Add(new TilePolygon(center, TilePolygon.DefaultShape.others, l2.ToArray()));
 
             }

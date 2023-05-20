@@ -8,18 +8,21 @@ using System.Drawing.Drawing2D;
 using RWCustom;
 namespace TestMod
 {
-    class Polygon
+    public class Polygon
     {
         public BodyChunk center;
+        public Vector2 PivotPoint;
         public UnityEngine.Vector2[] corners;
         public UnityEngine.Vector2[] lastcorners;
         public UnityEngine.Vector2[] lastlastcorners;
-        private List<Vector2> edges = new List<Vector2>();
+        private List<Polygon.Edge> edges = new List<Edge>();
         public float width;
         public float height;
         public float angleDeg;
         public List<TilePolygon> collisionContainer; 
         private Vector2[] originalCorners;
+
+     
 
         public Polygon(BodyChunk center, float width, float height, Vector2[] origCorners)
         {
@@ -30,9 +33,9 @@ namespace TestMod
             corners = new UnityEngine.Vector2[originalCorners.Length];
             lastcorners = new UnityEngine.Vector2[originalCorners.Length];
             lastlastcorners = new UnityEngine.Vector2[originalCorners.Length];
-            edges = new List<Vector2>();
+            edges = new List<Edge>();
             UpdateCornerPoints();
-            angleDeg = 45f;
+            angleDeg = 1f;
             Debug.Log("Adding actual polygon list!");
             collisionContainer = new List<TilePolygon>();
             
@@ -91,7 +94,7 @@ namespace TestMod
             }
 
             // Define edges
-            BuildEdges();
+           
 
             // Loop through each corner point
             for (int i = 0; i < corners.Length; i++)
@@ -99,8 +102,41 @@ namespace TestMod
                 corners[i] = Custom.RotateAroundOrigo(corners[i], angleDeg);
                 corners[i] += center.pos+center.vel;
             }
-           
+            BuildEdges();
         }
+
+        //public void UpdateCornerPointsGrip(Vector2 gripPos)
+        //{
+        //    this.lastcorners.CopyTo(this.lastlastcorners, 0);
+        //    this.corners.CopyTo(this.lastcorners, 0);
+
+
+        //    // Define the corner points of the shape
+
+        //    for (int i = 0; i < corners.Length; i++)
+        //    {
+        //        corners[i] = originalCorners[i] * new Vector2(width, height);
+        //    }
+
+        //    // Loop through each corner point
+        //    for (int i = 0; i < corners.Length; i++)
+        //    {
+        //        //corners[i] = Custom.RotateAroundOrigo(corners[i], angleDeg);
+        //        corners[i] += center.pos + center.vel;
+        //        corners[i]-=gripPos;
+        //        corners[i] = Custom.RotateAroundOrigo(corners[i],angleDeg);
+        //        corners[i] += center.pos + center.vel;
+        //    }
+        //    // center.pos += center.vel;
+           
+
+        //    //center.pos -= gripPos;
+        //    //center.pos = Custom.RotateAroundOrigo(center.pos, angleDeg);
+        //    //center.pos += gripPos;
+        //    // center.pos +=  center.vel;
+
+        //    BuildEdges();
+        //}
 
         public void UpdateCornerPointsWithAngle(float angleAdded)
         {
@@ -108,47 +144,52 @@ namespace TestMod
             this.corners.CopyTo(this.lastcorners, 0);
             // Define the corner points of the shape
             angleDeg += angleAdded;
-            angleDeg = angleDeg%359;
+            angleDeg = angleDeg%360;
             for (int i = 0; i < corners.Length; i++)
             {
                 corners[i] = originalCorners[i] * new Vector2(width, height);
             }
 
-            // Define Edges
-            BuildEdges();
+           
 
             // Loop through each corner point
             for (int i = 0; i < corners.Length; i++)
             {
-                corners[i] = RWCustom.Custom.RotateAroundOrigo(corners[i], angleDeg);
+                corners[i] = Custom.RotateAroundOrigo(corners[i], angleDeg);
                 corners[i] += center.pos + center.vel;
-            }
 
+            }
+           
+            BuildEdges();
         }
 
         public void BuildEdges()
         {
-            Vector2 p1;
-            Vector2 p2;
-            Edges.Clear();
+            edges.Clear();
             for (int i = 0; i < corners.Length; i++)
-            {
-                p1 = new Vector2(corners[i].x, corners[i].y);
-                if (i + 1 >= corners.Length)
-                {
-                    p2 = new Vector2(corners[0].x, corners[0].y);
-                }
-                else
-                {
-                    p2 = new Vector2(corners[i + 1].x, corners[i + 1].y);
-                }
-                edges.Add(p2 - p1);
+            {             
+                edges.Add(new Edge(corners[i], corners[(i+1)% corners.Length]));
             }
         }
 
-        public List<Vector2> Edges
+        public List<Edge> Edges
         {
             get { return edges; }
+        }
+
+        public class Edge
+        {
+            public Vector2 p1;
+            public Vector2 p2;
+            public Edge(Vector2 p1, Vector2 p2) { this.p1 = p1; this.p2 = p2; }
+            public bool Equal(Edge e)
+            {
+                if ((e.p1 == this.p1 && e.p2 == this.p2) || (e.p2 == this.p1 && e.p1 == this.p2))
+                {
+                    return true;
+                }
+                return false;
+            }
         }
     }
 }
