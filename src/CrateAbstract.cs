@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace TestMod
 {
-    sealed class CrateAbstract : AbstractPhysicalObject
+    public class CrateAbstract : AbstractPhysicalObject
     {
         public CrateAbstract(World world, WorldCoordinate pos, EntityID ID) : base(world, CrateFisobs.Crate, null, pos, ID)
         {

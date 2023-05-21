@@ -1,10 +1,11 @@
 ﻿using System.Collections.Generic;
+using JetBrains.Annotations;
 using RWCustom;
 using UnityEngine;
 
 namespace TestMod
 {
-    sealed class Crate : PhysicalObject, IDrawable
+    public class Crate : PhysicalObject, IDrawable
     {
         private static float Rand => UnityEngine.Random.value;
 
@@ -28,30 +29,36 @@ namespace TestMod
            
             rad = 50f;
             Debug.Log("Initializing Crate Object!");
-            float mass = 10f;
+            int mass = 10;
             Abstr = abstr;
             var positions = new List<Vector2>();
-
-            /*for (int x = -1; x <= 1; x++)
-            {
-                for (int y = -1; y <= 1; y++)
-                {
-                    positions.Add(new Vector2(x, y) * 20f);
-                }
-            }*/
+           
+            
             positions.Add(new Vector2(0, 0) * 20f);
-            bodyChunks = new BodyChunk[positions.Count];
+          
 
-            // Create all body chunks
-            for(int i = 0; i < bodyChunks.Length; i++)
-            {
-                bodyChunks[i] = new BodyChunk(this, i, new Vector2(), rad, mass / bodyChunks.Length);
-            }
+           
 
-            bodyChunkConnections = new BodyChunkConnection[bodyChunks.Length * (bodyChunks.Length - 1) / 2];
+            
             int connection = 0;
 
             // Create all chunk connections
+
+            //BODY CHUNK
+            float width = rad * 2;
+            float height = rad * 2;
+            this.bodyChunks = new BodyChunk[1];
+            Vector2[] origCorners = new Vector2[4];
+
+            
+
+            origCorners[0] = new UnityEngine.Vector2(-1 / 2f, -1 / 2f); // Bottom Left
+            origCorners[1] = new UnityEngine.Vector2(-1 / 2f, 1 / 2f); // Top Left
+            origCorners[2] = new UnityEngine.Vector2(1 / 2f, 1 / 2f); // Top Right
+            origCorners[3] = new UnityEngine.Vector2(1 / 2f, -1 / 2f); // Bottom Right
+
+            this.bodyChunks[0] = new Polygon(this, mass, width / 2, height / 2, 1, origCorners);
+            bodyChunkConnections = new BodyChunkConnection[bodyChunks.Length * (bodyChunks.Length - 1) / 2];
             for (int x = 0; x < bodyChunks.Length; x++)
             {
                 for (int y = x + 1; y < bodyChunks.Length; y++)
@@ -60,6 +67,10 @@ namespace TestMod
                     connection++;
                 }
             }
+            if (this.bodyChunks[0] is Polygon) { this.rect = this.bodyChunks[0] as Polygon; }
+            //////////
+
+
 
 
             airFriction = 0.999f;
@@ -74,31 +85,18 @@ namespace TestMod
             rotation = Rand * 360f;
             lastRotation = rotation;
             rotationOffset = Rand * 30 - 15;
-            float width = rad * 2;
-            float height = rad * 2;
-            Vector2[] origCorners = new Vector2[4];
-
-            // Square
-            
-            origCorners[0] = new UnityEngine.Vector2(-width / 2f, -height / 2f); // Bottom Left
-            origCorners[1] = new UnityEngine.Vector2(-width / 2f, height / 2f); // Top Left
-            origCorners[2] = new UnityEngine.Vector2(width / 2f, height / 2f); // Top Right
-            origCorners[3] = new UnityEngine.Vector2(width / 2f, -height / 2f); // Bottom Right
-
-            // Triangle needs some work with the allingement, but custom shapes work!
-            // Triangle
-            /*
-            origCorners[0] = new UnityEngine.Vector2(0, 40);
-            origCorners[1] = new UnityEngine.Vector2(17.3f * 3, -10f * 3);
-            origCorners[2] = new UnityEngine.Vector2(-17.3f * 3, -10f * 3);
-            */
+           
 
             Debug.Log("Loading Crate BodyChunk ctor!");
-            rect = new Polygon(this.bodyChunks[0].pos, rad * 2, rad * 2, origCorners);
+
+           
+
+
+            //rect = new Polygon(this.bodyChunks[0].pos, 60, 3);
             if (Plugin.DEBUGMODE) { DebugSpr = new PolygonDebugSprite(rect); }
 
         }
-
+        
         public override void Grabbed(Creature.Grasp grasp)
         {
             base.Grabbed(grasp);
@@ -109,7 +107,10 @@ namespace TestMod
         public override void Update(bool eu)
         {
             base.Update(eu);
-
+            //if (Input.GetMouseButtonDown(0))
+            //{
+            //    this.bodyChunks[0].vel += this.bodyChunks[0].pos - new Vector2(Input.mousePosition.x, Input.mousePosition.y);
+            //}
 
             /*if (grabbedBy.Count == 0)
             {
@@ -117,15 +118,20 @@ namespace TestMod
                 bodyChunks[0].vel = new Vector2(bodyChunks[0].vel.x * 0.65f, bodyChunks[0].vel.y);
             }*/
 
-            rect.center = firstChunk.pos;
-            rect.UpdateCornerPointsWithAngle(2.5f);
-           
+            this.bodyChunks[0] = firstChunk;
+            //rect.ChangeSize(85);
+            //Debug.Log(rect.vel(1));
+
+            rect.UpdateCornerPoints();
+
+            //rect.UpdateCornerPointsGrip(new Vector2(250, 250));
+            //rect.angleDeg += 2;
             //Debug.Log(rect.center.x + " " + rect.center.y);
 
 
-            var chunk = firstChunk;
+          
             lastRotation = rotation;
-            rotation += rotVel * Vector2.Distance(chunk.lastPos, chunk.pos);
+            rotation = rect.angleDeg;
 
             rotation %= 360;
 
@@ -183,10 +189,12 @@ namespace TestMod
             Debug.Log("Placing Crate!");
             base.PlaceInRoom(placeRoom);
 
+           // Time.timeScale = 0.3f;
+
             Vector2 center = placeRoom.MiddleOfTile(abstractPhysicalObject.pos);
             bodyChunks[0].HardSetPosition(new Vector2(0, 0) * 20f + center);
             rect.UpdateCornerPoints();
-            placeRoom.AddObject(DebugSpr);
+            if(DebugSpr!=null)placeRoom.AddObject(DebugSpr);
         }
 
         public override void TerrainImpact(int chunk, IntVector2 direction, float speed, bool firstContact)
@@ -207,25 +215,25 @@ namespace TestMod
             sLeaser.sprites[0] = new FSprite("icon_Crate", true);*/
             
             for(int i = 0; i < bodyChunks.Length; i++)
-                sLeaser.sprites[i] = new FSprite("Circle20");
+                sLeaser.sprites[i] = new FSprite("FaceE1");
 
             for (int i = bodyChunks.Length; i < bodyChunks.Length + rect.corners.Length; i++)
-                sLeaser.sprites[i] = new FSprite("Circle4");
+                sLeaser.sprites[i] = new FSprite("pixel",true);
 
-            for (int i = bodyChunks.Length; i < bodyChunks.Length + rect.corners.Length; i++)
-                sLeaser.sprites[i] = new FSprite("Circle4");
+          
 
             AddToContainer(sLeaser, rCam, null);
         }
 
         public void DrawSprites(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
         {
+
             // Colors in collidors
             for(int i = 0; i < bodyChunks.Length; i++)
             {
                 var spr = sLeaser.sprites[i];
-                spr.SetPosition( bodyChunks[i].pos- camPos);
-                spr.scale = rect.width / 20f;
+                spr.SetPosition(bodyChunks[i].pos + bodyChunks[i].vel - camPos);
+                spr.scale = rect.width/20;
             }
 
             for (int a = 0; a < rect.corners.Length; a++)
@@ -240,12 +248,18 @@ namespace TestMod
                 sLeaser.CleanSpritesAndRemove();
 
 
-            sLeaser.sprites[0].rotation = Mathf.Lerp(lastRotation, rotation, timeStacker);
+            sLeaser.sprites[0].rotation = Mathf.Lerp(lastRotation+180, rotation+180, timeStacker);
             sLeaser.sprites[0].color = Color.Lerp(Custom.HSL2RGB(Abstr.hue, Abstr.saturation, 0.55f), Color.blue, darkness);
 
             for (int a = 0; a < rect.corners.Length; a++)
             {
-                sLeaser.sprites[bodyChunks.Length + a].rotation = Mathf.Lerp(lastRotation, rotation, timeStacker);
+                sLeaser.sprites[bodyChunks.Length + a].SetPosition(rect.corners[a] + (rect.corners[(a + 1) % rect.corners.Length]-rect.corners[a] ) / 2 - camPos);
+                sLeaser.sprites[bodyChunks.Length + a].scaleX = 1;
+                sLeaser.sprites[bodyChunks.Length + a].scaleY = Custom.Dist(rect.corners[a], rect.corners[(a+1)%rect.corners.Length]);
+
+                sLeaser.sprites[bodyChunks.Length + a].rotation = Custom.AimFromOneVectorToAnother(rect.corners[a], rect.corners[(a + 1) % rect.corners.Length]);
+                sLeaser.sprites[bodyChunks.Length + a].isVisible = true;
+              //  sLeaser.sprites[bodyChunks.Length + a].rotation = Mathf.Lerp(lastRotation, rotation, timeStacker);
                 sLeaser.sprites[bodyChunks.Length + a].color = Color.Lerp(Custom.HSL2RGB(Abstr.hue, Abstr.saturation, 0.55f), Color.red, darkness);
             }
             // TODO: Add the sprite for this back
