@@ -34,7 +34,7 @@ namespace TestMod
 		public Vector2 pivot;
 		public float rotationInDegrees;
 
-		public static bool DEBUGMODE = false;
+		public static bool DEBUGMODE = true;
 		public void OnEnable()
 		{
 			// How to make a hook:
@@ -116,7 +116,7 @@ namespace TestMod
 						Vector2 line_r1s = poly1.pos;
 						Vector2 line_r1e = poly1.corners[p];
 
-
+						
 						// ... against edges of other polygon
 						for (int q = 0; q < polyTile.corners.Length; q++)
 						{
@@ -386,7 +386,9 @@ namespace TestMod
 					(self.owner as Crate).DebugSpr.Tiles = crate.rect.collisionContainer;
 
                 }
-               
+				Debug.Log("Reached ang update");
+				(self as Polygon).UpdateCornerPoints();
+				Debug.Log("Passed ang update");
                 //if (crate.rect.collisionContainer.Count > 0)
                 //{
                 //	for (int i = 0; i < crate.rect.collisionContainer.Count; i++)
@@ -470,9 +472,9 @@ namespace TestMod
 
 						self.HardSetPosition(self.pos + polygonCollisionResult.Push);
 
-                        (self as Polygon).UpdateCornerPoints();
+                        //(self as Polygon).UpdateCornerPoints();
 
-
+						
 
 
 						if (polygonCollisionResult.collidedSide == 0)
@@ -508,16 +510,29 @@ namespace TestMod
 
 				if (willbounced)
 				{
-
+					
 					self.vel = self.vel.magnitude * Vector2.Reflect(self.vel.normalized, polygonCollisionResult.ReflectedNormal) * 0.7f;//Vector2.Reflect(self.vel,polygonCollisionResult.ReflectedNormal)*0.6f ;
-					//crate.DebugSpr?.DrawADot(polygonCollisionResult.ReflectedNormal +polygonCollisionResult.CollisionPos);
-					//                    if (polygonCollisionResult.Push.y != 0)
-					//self.vel.y *= -1  * 0.5f;
-					//                    if (polygonCollisionResult.Push.x != 0)
-					//                        self.vel.x *= -1  * 0.5f;
+					Vector2 force = Vector2.Reflect(self.vel.normalized, polygonCollisionResult.ReflectedNormal);                                                                                              //crate.DebugSpr?.DrawADot(polygonCollisionResult.ReflectedNormal +polygonCollisionResult.CollisionPos);
+																																																			   //                    if (polygonCollisionResult.Push.y != 0)
+																																																			   //self.vel.y *= -1  * 0.5f;
+																																																			   //                    if (polygonCollisionResult.Push.x != 0)
+																																																			   //                        self.vel.x *= -1  * 0.5f;
 
 					//self.vel*= -polygonCollisionResult.Push.normalized*0.4f;
-
+					
+					// Need: floats// mass, size, angVel, dt
+					// Need: Vector2// pos, force, PolygonCenter
+					//Debug.Log("Reached beginning of angle vel calc");
+					float inertia = self.mass * (self as Polygon).width * (self as Polygon).height / 6f;
+					float torque = Vector3.Cross(force , polygonCollisionResult.CollisionPos - self.pos).z;
+					(self as Polygon).angVel += torque * Time.deltaTime / inertia;
+					(self as Polygon).angleDeg += ((self as Polygon).angVel * Time.deltaTime);
+					/*Debug.Log("Got Past Angle vel calc");
+					Debug.Log("angleDeg: " + (self as Polygon).angleDeg);
+					Debug.Log("dt: " + Time.deltaTime);
+					Debug.Log("angVel: " + (self as Polygon).angVel);
+					Debug.Log("inertia: " + inertia);
+					Debug.Log("torque: " + torque);*/
 				}
 			}
 			else

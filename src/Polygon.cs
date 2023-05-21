@@ -23,6 +23,7 @@ namespace TestMod
         public float width;
         public float height;
         public float angleDeg;
+        public float angVel;
         public List<TilePolygon> collisionContainer; 
         private Vector2[] originalCorners;
 
@@ -45,6 +46,7 @@ namespace TestMod
             edges = new List<Edge>();
             UpdateCornerPoints();
             angleDeg = 0f;
+            angVel = 0f;
             Debug.Log("Adding actual polygon list!");
             collisionContainer = new List<TilePolygon>();
             

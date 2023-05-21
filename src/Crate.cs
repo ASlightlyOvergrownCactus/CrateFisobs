@@ -122,7 +122,7 @@ namespace TestMod
             //rect.ChangeSize(85);
             //Debug.Log(rect.vel(1));
 
-            rect.UpdateCornerPoints();
+            //rect.UpdateCornerPoints();
 
             //rect.UpdateCornerPointsGrip(new Vector2(250, 250));
             //rect.angleDeg += 2;

@@ -8,25 +8,23 @@
     ".NETFramework,Version=v4.8": []
   },
   "packageFolders": {
-    "C:\\Users\\johns\\.nuget\\packages\\": {},
-    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {},
-    "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder": {}
+    "C:\\Users\\Owner\\.nuget\\packages\\": {},
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\johns\\OneDrive\\Documents\\GitHub\\CrateFisobs\\src\\TestMod.csproj",
+      "projectUniqueName": "C:\\Users\\Owner\\Desktop\\Rain World Modding\\TestMods\\Crate-Fisobs-MainFolder\\CrateFisobs\\src\\TestMod.csproj",
       "projectName": "TestMod",
-      "projectPath": "C:\\Users\\johns\\OneDrive\\Documents\\GitHub\\CrateFisobs\\src\\TestMod.csproj",
-      "packagesPath": "C:\\Users\\johns\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\johns\\OneDrive\\Documents\\GitHub\\CrateFisobs\\src\\obj\\",
+      "projectPath": "C:\\Users\\Owner\\Desktop\\Rain World Modding\\TestMods\\Crate-Fisobs-MainFolder\\CrateFisobs\\src\\TestMod.csproj",
+      "packagesPath": "C:\\Users\\Owner\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Owner\\Desktop\\Rain World Modding\\TestMods\\Crate-Fisobs-MainFolder\\CrateFisobs\\src\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
-        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages",
-        "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\johns\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\Owner\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -52,7 +50,7 @@
     "frameworks": {
       "net48": {
         "targetAlias": "net48",
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.203\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.408\\RuntimeIdentifierGraph.json"
       }
     }
   }

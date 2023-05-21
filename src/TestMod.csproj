@@ -4,7 +4,6 @@
     <TargetFramework>net48</TargetFramework>
     <LangVersion>9</LangVersion>
 	<Nullable>enable</Nullable>
-	<BaseOutputPath>C:\Users\johns\OneDrive\Documents\GitHub\CrateFisobs\Cube_phsyics_Mod\Plugins</BaseOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
