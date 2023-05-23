@@ -25,7 +25,7 @@ namespace TestMod
             RegisterUnlock(MetalCrate, parent: MultiplayerUnlocks.SandboxUnlockID.Slugcat, data: 0);
         }
 
-        public override AbstractPhysicalObject Parse(World world, EntitySaveData saveData, SandboxUnlock? unlock)
+        public override AbstractPhysicalObject Parse(World world, EntitySaveData saveData, SandboxUnlock unlock)
         {
             // Crate data is just floats separated by ; characters.
             string[] p = saveData.CustomData.Split(';');

@@ -79,3 +79,12 @@ C:\Users\johns\OneDrive\Documents\GitHub\CrateFisobs\src\obj\Debug\net48\TestMod
 C:\Users\johns\OneDrive\Documents\GitHub\CrateFisobs\src\obj\Debug\net48\TestMod.dll
 C:\Users\johns\OneDrive\Documents\GitHub\CrateFisobs\src\obj\Debug\net48\TestMod.pdb
 C:\Users\johns\OneDrive\Documents\GitHub\CrateFisobs\src\obj\Debug\net48\TestMod.csproj.CopyComplete
+C:\Users\thego\Source\Repos\CrateFisobs\src\bin\Debug\net48\TestMod.dll
+C:\Users\thego\Source\Repos\CrateFisobs\src\bin\Debug\net48\TestMod.pdb
+C:\Users\thego\Source\Repos\CrateFisobs\src\obj\Debug\net48\TestMod.csproj.AssemblyReference.cache
+C:\Users\thego\Source\Repos\CrateFisobs\src\obj\Debug\net48\TestMod.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\thego\Source\Repos\CrateFisobs\src\obj\Debug\net48\TestMod.AssemblyInfoInputs.cache
+C:\Users\thego\Source\Repos\CrateFisobs\src\obj\Debug\net48\TestMod.AssemblyInfo.cs
+C:\Users\thego\Source\Repos\CrateFisobs\src\obj\Debug\net48\TestMod.csproj.CoreCompileInputs.cache
+C:\Users\thego\Source\Repos\CrateFisobs\src\obj\Debug\net48\TestMod.dll
+C:\Users\thego\Source\Repos\CrateFisobs\src\obj\Debug\net48\TestMod.pdb

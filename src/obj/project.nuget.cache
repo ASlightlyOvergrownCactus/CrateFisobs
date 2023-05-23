@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "47MAz6cjl5ZAIDscb4UkUmDQ+AlsiGqQQXmgOYlHL+wecykjr7xSYgdGrhNPar75bqy34xnBiWMiYM7H1Ogb1Q==",
+  "dgSpecHash": "fuZrKSiEjfvJJ8qArPUGGoXNCxp0qKbkZR8ohBNfZGD7+aBkbDMZ7TNaPFZPjvCryis5jTvQV2+0udKcPgVm7w==",
   "success": true,
-  "projectFilePath": "C:\\Users\\Owner\\Desktop\\Rain World Modding\\TestMods\\Crate-Fisobs-MainFolder\\CrateFisobs\\src\\TestMod.csproj",
+  "projectFilePath": "C:\\Users\\thego\\Source\\Repos\\CrateFisobs\\src\\TestMod.csproj",
   "expectedPackageFiles": [],
   "logs": []
 }

@@ -1,0 +1,10 @@
+﻿{
+  "id": "crates",
+  "name": "Crates",
+  "version": "0.1.0",
+  "authors": "AslightlyOvergrownCactus",
+  "description": "Adds crates!!!",
+  "requirements": [ "fisobs" ],
+  "requirements_names": [ "Fisobs" ],
+  "checksum_override_version": false
+}
