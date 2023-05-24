@@ -3,7 +3,6 @@
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
     <LangVersion>9</LangVersion>
-	<Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,19 +11,8 @@
     </Reference>
   </ItemGroup>
 
-  <ItemGroup>
-    <Reference Include="UnityEngine.InputLegacyModule">
-      <HintPath>..\..\..\..\桌面\NaCIO\RW_ModStuff\TestMod-master\lib\UnityEngine.InputLegacyModule.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="Exists('$(RainWorldDir)')">
-    <ItemGroup>
-      <Assets Include="$(ProjectDir)../assets/**/*.*" />
-    </ItemGroup>
-    <Copy SourceFiles="@(Assets)" DestinationFiles="$(RainWorldDir)/RainWorld_Data/StreamingAssets/mods/$(ProjectName)/%(RecursiveDir)%(Filename)%(Extension)" />
-    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(RainWorldDir)/RainWorld_Data/StreamingAssets/mods/$(ProjectName)/plugins" />
-    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ProjectDir)Mod/plugins/" />
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(SolutionDir)mod/plugins/" />
   </Target>
 
 </Project>
