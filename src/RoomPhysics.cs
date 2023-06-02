@@ -17,6 +17,7 @@ namespace TestMod
         private readonly Scene _scene;
         private readonly PhysicsScene2D _physics;
         private readonly Dictionary<UpdatableAndDeletable, GameObject> _linkedObjects = new();
+        public static Crate c;
 
         #region Hooks and Helpers
         public static void AddHooks()
@@ -87,8 +88,9 @@ namespace TestMod
             return _linkedObjects.TryGetValue(owner, out gameObj);
         }
 
-        public GameObject CreateObject(UpdatableAndDeletable owner)
+        public GameObject CreateObject(UpdatableAndDeletable owner, Crate crate)
         {
+            c = crate;
             var obj = new GameObject();
             SceneManager.MoveGameObjectToScene(obj, _scene);
             try
@@ -110,7 +112,6 @@ namespace TestMod
 
             var rb2d = obj.AddComponent<Rigidbody2D>();
             rb2d.bodyType = RigidbodyType2D.Static;
-
             var compositeCollider = obj.AddComponent<CompositeCollider2D>();
             compositeCollider.generationType = CompositeCollider2D.GenerationType.Manual;
             compositeCollider.geometryType = CompositeCollider2D.GeometryType.Outlines;
@@ -139,7 +140,6 @@ namespace TestMod
                         if(startX != null)
                         {
                             var col = obj.AddComponent<BoxCollider2D>();
-                            
                             col.size = new Vector2(x - startX.Value, 1f) * 20f / PIXELS_PER_UNIT;
                             col.offset = new Vector2(startX.Value, y) * 20f / PIXELS_PER_UNIT + col.size / 2f;
                             col.usedByComposite = true;

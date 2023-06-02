@@ -28,6 +28,8 @@ namespace TestMod
         {
             Content.Register(new CrateFisobs());
             RoomPhysics.AddHooks();
+            Crate.AddHooks();
+            
         }
     }
 }

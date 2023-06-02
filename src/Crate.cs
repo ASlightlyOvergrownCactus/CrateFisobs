@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using RWCustom;
 using UnityEngine;
 
@@ -10,17 +11,99 @@ namespace TestMod
         public float rotation;
         public float lastRotation;
         public float darkness;
-        
+        public float distance;
+        public static List<Crate> crates = new List<Crate>();
+        private Vector2 grabberPos;
+
+        #region Hooks and Helpers
+        public static void AddHooks()
+        {
+            On.Player.Update += Player_Update;
+            On.Player.GrabUpdate += Player_GrabUpdate;
+        }
+
+        private static void Player_GrabUpdate(On.Player.orig_GrabUpdate orig, Player self, bool eu)
+        {
+            if (self != null && self.grasps[0] != null)
+            {
+                if (self.grasps[0].grabbedChunk.owner is Crate)
+                {
+
+                    Vector2 a = Custom.DirVec(self.mainBodyChunk.pos, self.grasps[0].grabbedChunk.pos);
+                    Vector2 c = Vector2.zero;
+                    float dist = Vector2.Distance(self.mainBodyChunk.pos, self.grasps[0].grabbedChunk.pos);
+                    float num = 5f + self.grasps[0].grabbedChunk.rad;
+
+                    float num2 = self.grasps[0].grabbedChunk.mass / (self.mainBodyChunk.mass + self.grasps[0].grabbedChunk.mass);
+                    if (self.enteringShortCut != null)
+                    {
+                        num2 = 0f;
+                    }
+                    else if (self.grasps[0].grabbed.TotalMass < self.TotalMass)
+                    {
+                        num2 /= 2f;
+                    }
+
+                    if (self.enteringShortCut == null || dist > num)
+                    {
+                        Vector2 b = a * (dist - num) * num2;
+                        self.mainBodyChunk.pos += b;
+                        self.mainBodyChunk.vel += b;
+
+                        c = a * (dist - num) * (1f - num2);
+                    }
+
+                    
+
+                    //(self.grasps[0].grabbedChunk.owner as Crate).firstChunk.pos += (force * self.input[0].analogueDir);
+
+                    var phys = RoomPhysics.Get(self.room);
+                    if (phys.TryGetObject(self.grasps[0].grabbedChunk.owner, out var obj))
+                    {
+                       var rb2d = obj.GetComponent<Rigidbody2D>();
+                      rb2d.AddForce(c);
+                    }
+                    (self.grasps[0].grabbedChunk.owner as Crate).grabberPos = (self.grasps[0].grabbedChunk.owner as Crate).grabberPos - (self.grasps[0].grabbed.firstChunk.pos).normalized * (self.grasps[0].grabbedChunk.owner as Crate).distance + self.grasps[0].grabbed.firstChunk.pos;
+                }
+            }
+            orig(self, eu);
+        }
+
+        private static void Player_Update(On.Player.orig_Update orig, Player self, bool eu)
+        {
+            //Debug.Log("Reached start");
+            if (self.input[0].pckp && self.grasps[0] == null && self.grasps[1] == null)
+            {
+                //Debug.Log("Got Past check");
+                float dist = float.PositiveInfinity;
+                Crate c = Crate.crates[0];
+                for (int i = 0; i < crates.Count; i++)
+                {
+                    float temp = Vector2.Distance(self.bodyChunks[0].pos, crates.ElementAt(i).bodyChunks[0].pos);
+                    if (temp < dist)
+                    {
+                        dist = temp;
+                        c = crates.ElementAt(i);
+                    }
+                }
+                c.GrabObj(self);
+                //Debug.Log("Finished Grab");
+            }
+            //Debug.Log("Escaped if statement");
+
+            orig(self, eu);
+        }
+        #endregion Hooks and Helpers
         public CrateAbstract Abstr { get; }
         public Crate(CrateAbstract abstr) : base(abstr)
         {
             Abstr = abstr;
 
             bodyChunks = new BodyChunk[]
-            {
-                new BodyChunk(this, 0, new Vector2(), 50f, 10f)
-            };
+                { new BodyChunk(this, 0, new Vector2(), 10f, 10f),
+                new BodyChunk(this, 0, Vector2.zero, 20f, 1f)};
 
+            
             bodyChunkConnections = new BodyChunkConnection[0];
 
             airFriction = 0.999f;
@@ -34,9 +117,35 @@ namespace TestMod
             CollideWithSlopes = false;
             CollideWithObjects = false;
             GoThroughFloors = true;
+            grabberPos = Vector2.zero;
 
             rotation = 0f;
             lastRotation = rotation;
+            crates.Add(this);
+        }
+
+        public void GrabObj(Player player)
+        {
+            if (player.input[0].pckp && player.grasps[0] == null && player.grasps[1] == null)
+            {
+                var phys = RoomPhysics.Get(room);
+
+
+                if (phys.TryGetObject(this, out var obj))
+                {
+                    
+                    var rb2d = obj.GetComponent<Rigidbody2D>();
+                    //Debug.Log("New grabber chunk position: " + bodyChunks[1].pos);
+                    grabberPos = rb2d.ClosestPoint(player.bodyChunks[0].pos / RoomPhysics.PIXELS_PER_UNIT) * RoomPhysics.PIXELS_PER_UNIT;
+                    distance = Vector2.Distance(grabberPos, firstChunk.pos);
+
+                    if (Vector2.Distance(grabberPos, player.bodyChunks[0].pos) < 20f)
+                    {
+                        player.Grab(this, 0, 1, Creature.Grasp.Shareability.CanOnlyShareWithNonExclusive, 0.5f, true, true);
+                    }
+                }
+
+            }
         }
         
         public override void Update(bool eu)
@@ -45,12 +154,17 @@ namespace TestMod
             base.Update(eu);
 
             if (room == null || slatedForDeletetion)
+            {
+                crates.Remove(this);
                 return;
+            }
+
+            bodyChunks[1].HardSetPosition(grabberPos);
 
             var phys = RoomPhysics.Get(room);
             if (!phys.TryGetObject(this, out var obj))
             {
-                obj = phys.CreateObject(this);
+                obj = phys.CreateObject(this, this);
                 obj.transform.position = firstChunk.pos / RoomPhysics.PIXELS_PER_UNIT;
 
                 var rb2d = obj.AddComponent<Rigidbody2D>();
@@ -59,7 +173,7 @@ namespace TestMod
                 rb2d.gravityScale = 0.5f;
 
                 var box = obj.AddComponent<BoxCollider2D>();
-                box.size = Vector2.one * 2f * firstChunk.rad / RoomPhysics.PIXELS_PER_UNIT;
+                box.size = Vector2.one * 100f / RoomPhysics.PIXELS_PER_UNIT;
             }
             else
             {
@@ -115,8 +229,10 @@ namespace TestMod
                 {
                     anchorX = 0.5f,
                     anchorY = 0.5f,
-                    scale = firstChunk.rad * 2f
-                }
+                    scale = 50f * 2f
+                },
+
+                new FSprite("pixel"){anchorX = 0.5f, anchorY = 0.5f, scale = 20f}
             };
 
             AddToContainer(sLeaser, rCam, null);
@@ -126,12 +242,17 @@ namespace TestMod
         {
             sLeaser.sprites[0].SetPosition(Vector2.Lerp(firstChunk.lastPos, firstChunk.pos, timeStacker) - camPos);
             sLeaser.sprites[0].rotation = Mathf.LerpAngle(lastRotation, rotation, timeStacker);
+
+            sLeaser.sprites[1].SetPosition(Vector2.Lerp(bodyChunks[1].lastPos, bodyChunks[1].pos, timeStacker) - camPos);
+            sLeaser.sprites[1].rotation = Mathf.LerpAngle(lastRotation, rotation, timeStacker);
         }
 
         public void ApplyPalette(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, RoomPalette palette)
         {
-            foreach (var sprite in sLeaser.sprites)
-                sprite.color = palette.blackColor;
+            //foreach (var sprite in sLeaser.sprites)
+                //sprite.color = palette.blackColor;
+                sLeaser.sprites[0].color = palette.blackColor;
+            sLeaser.sprites[1].color = Color.red;
         }
 
         public void AddToContainer(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, FContainer newContainer)
