@@ -2,6 +2,7 @@
 using System.Linq;
 using RWCustom;
 using UnityEngine;
+using System.Threading.Tasks;
 
 namespace TestMod
 {
@@ -14,12 +15,37 @@ namespace TestMod
         public float distance;
         public static List<Crate> crates = new List<Crate>();
         private Vector2 grabberPos;
+        private Vector2 grabPoint;
+        public bool canGrab;
 
         #region Hooks and Helpers
         public static void AddHooks()
         {
             On.Player.Update += Player_Update;
             On.Player.GrabUpdate += Player_GrabUpdate;
+            On.Player.ReleaseObject += Player_ReleaseObject;
+        }
+
+        // Hooked to make a timer on release of the object to prevent the player from immediately grabbing again due to holding the button for like even a fraction of a second
+        private static async void Player_ReleaseObject(On.Player.orig_ReleaseObject orig, Player self, int grasp, bool eu)
+        {
+            int index = 0;
+            if (self.grasps[grasp].grabbed is Crate)
+            {
+                for (int i = 0; i < Crate.crates.Count; i++)
+                {
+                    if ((self.grasps[grasp].grabbed as Crate) == Crate.crates.ElementAt(i))
+                    {
+                        index = i;
+                    }
+                }
+                Crate.crates.ElementAt(index).canGrab = false;
+                orig(self, grasp, eu);
+                await Task.Delay(200);
+                Crate.crates.ElementAt(index).canGrab = true;
+            }
+            orig(self, grasp, eu);
+            
         }
 
         private static void Player_GrabUpdate(On.Player.orig_GrabUpdate orig, Player self, bool eu)
@@ -28,6 +54,10 @@ namespace TestMod
             {
                 if (self.grasps[0].grabbedChunk.owner is Crate)
                 {
+
+                    //Need:
+                    // 1. If slugcat is far enough from object while grabbing, add force to object in slugcat's direction.
+                    // 2. When grabbing, grabber position stays relative to the object and can't be moved from its relative position.
 
                     Vector2 a = Custom.DirVec(self.mainBodyChunk.pos, self.grasps[0].grabbedChunk.pos);
                     Vector2 c = Vector2.zero;
@@ -46,24 +76,22 @@ namespace TestMod
 
                     if (self.enteringShortCut == null || dist > num)
                     {
-                        Vector2 b = a * (dist - num) * num2;
-                        self.mainBodyChunk.pos += b;
-                        self.mainBodyChunk.vel += b;
-
-                        c = a * (dist - num) * (1f - num2);
+                        c = -a * (dist - num) * (1f - num2);
                     }
-
-                    
-
-                    //(self.grasps[0].grabbedChunk.owner as Crate).firstChunk.pos += (force * self.input[0].analogueDir);
 
                     var phys = RoomPhysics.Get(self.room);
                     if (phys.TryGetObject(self.grasps[0].grabbedChunk.owner, out var obj))
                     {
                        var rb2d = obj.GetComponent<Rigidbody2D>();
-                      rb2d.AddForce(c);
+                        if (self.bodyChunks[1].ContactPoint.y == -1)
+                        {
+                            (self.grasps[0].grabbedChunk.owner as Crate).grabberPos += c;
+                            rb2d.AddForce(c);
+                            rb2d.position += (c / RoomPhysics.PIXELS_PER_UNIT);
+                        }
+
+                        (self.grasps[0].grabbedChunk.owner as Crate).grabberPos = rb2d.transform.TransformPoint((self.grasps[0].grabbedChunk.owner as Crate).grabPoint) * RoomPhysics.PIXELS_PER_UNIT;
                     }
-                    (self.grasps[0].grabbedChunk.owner as Crate).grabberPos = (self.grasps[0].grabbedChunk.owner as Crate).grabberPos - (self.grasps[0].grabbed.firstChunk.pos).normalized * (self.grasps[0].grabbedChunk.owner as Crate).distance + self.grasps[0].grabbed.firstChunk.pos;
                 }
             }
             orig(self, eu);
@@ -100,8 +128,8 @@ namespace TestMod
             Abstr = abstr;
 
             bodyChunks = new BodyChunk[]
-                { new BodyChunk(this, 0, new Vector2(), 10f, 10f),
-                new BodyChunk(this, 0, Vector2.zero, 20f, 1f)};
+                { new BodyChunk(this, 0, new Vector2(), 1f, 10f),
+                new BodyChunk(this, 0, Vector2.zero, 5f, 1f)};
 
             
             bodyChunkConnections = new BodyChunkConnection[0];
@@ -118,6 +146,7 @@ namespace TestMod
             CollideWithObjects = false;
             GoThroughFloors = true;
             grabberPos = Vector2.zero;
+            canGrab = true;
 
             rotation = 0f;
             lastRotation = rotation;
@@ -138,9 +167,10 @@ namespace TestMod
                     //Debug.Log("New grabber chunk position: " + bodyChunks[1].pos);
                     grabberPos = rb2d.ClosestPoint(player.bodyChunks[0].pos / RoomPhysics.PIXELS_PER_UNIT) * RoomPhysics.PIXELS_PER_UNIT;
                     distance = Vector2.Distance(grabberPos, firstChunk.pos);
-
-                    if (Vector2.Distance(grabberPos, player.bodyChunks[0].pos) < 20f)
+                    
+                    if (Vector2.Distance(grabberPos, player.bodyChunks[0].pos) < 20f && canGrab)
                     {
+                        grabPoint = rb2d.transform.InverseTransformPoint(new Vector3(this.grabberPos.x, this.grabberPos.y, 0f) / RoomPhysics.PIXELS_PER_UNIT);
                         player.Grab(this, 0, 1, Creature.Grasp.Shareability.CanOnlyShareWithNonExclusive, 0.5f, true, true);
                     }
                 }
@@ -232,7 +262,7 @@ namespace TestMod
                     scale = 50f * 2f
                 },
 
-                new FSprite("pixel"){anchorX = 0.5f, anchorY = 0.5f, scale = 20f}
+                new FSprite("pixel"){anchorX = 0.5f, anchorY = 0.5f, scale = 5f}
             };
 
             AddToContainer(sLeaser, rCam, null);
