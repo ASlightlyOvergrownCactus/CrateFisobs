@@ -2,7 +2,6 @@
 using System.Linq;
 using RWCustom;
 using UnityEngine;
-using System.Threading.Tasks;
 
 namespace TestMod
 {
@@ -17,6 +16,7 @@ namespace TestMod
         private Vector2 grabberPos;
         private Vector2 grabPoint;
         public bool canGrab;
+        public int timer;
 
         #region Hooks and Helpers
         public static void AddHooks()
@@ -27,7 +27,7 @@ namespace TestMod
         }
 
         // Hooked to make a timer on release of the object to prevent the player from immediately grabbing again due to holding the button for like even a fraction of a second
-        private static async void Player_ReleaseObject(On.Player.orig_ReleaseObject orig, Player self, int grasp, bool eu)
+        private static void Player_ReleaseObject(On.Player.orig_ReleaseObject orig, Player self, int grasp, bool eu)
         {
             int index = 0;
             if (self.grasps[grasp].grabbed is Crate)
@@ -40,9 +40,9 @@ namespace TestMod
                     }
                 }
                 Crate.crates.ElementAt(index).canGrab = false;
+                Crate.crates.ElementAt(index).timer = 20;
+
                 orig(self, grasp, eu);
-                await Task.Delay(200);
-                Crate.crates.ElementAt(index).canGrab = true;
             }
             orig(self, grasp, eu);
             
@@ -190,6 +190,16 @@ namespace TestMod
             }
 
             bodyChunks[1].HardSetPosition(grabberPos);
+
+            if (timer > 0)
+            {
+                canGrab = false;
+                timer--;
+            }
+            else
+            {
+                canGrab = true;
+            }
 
             var phys = RoomPhysics.Get(room);
             if (!phys.TryGetObject(this, out var obj))
