@@ -12,11 +12,12 @@ namespace TestMod
         public float lastRotation;
         public float darkness;
         public float distance;
-        public static List<Crate> crates = new List<Crate>();
         private Vector2 grabberPos;
         private Vector2 grabPoint;
         public bool canGrab;
         public int timer;
+
+        public DebugSpr debugSpr;
 
         #region Hooks and Helpers
         public static void AddHooks()
@@ -26,28 +27,41 @@ namespace TestMod
             On.Player.ReleaseObject += Player_ReleaseObject;
         }
 
+
         // Hooked to make a timer on release of the object to prevent the player from immediately grabbing again due to holding the button for like even a fraction of a second
         private static void Player_ReleaseObject(On.Player.orig_ReleaseObject orig, Player self, int grasp, bool eu)
         {
-            int index = 0;
             if (self.grasps[grasp].grabbed is Crate)
             {
-                for (int i = 0; i < Crate.crates.Count; i++)
+                Crate c = null;
+                foreach (var obj in self.room.physicalObjects[1])
                 {
-                    if ((self.grasps[grasp].grabbed as Crate) == Crate.crates.ElementAt(i))
+                    if (obj is Crate crate)
                     {
-                        index = i;
+                        if (self.grasps[grasp] != null)
+                        {
+                            if ((self.grasps[grasp].grabbed as Crate) == crate)
+                            {
+                                c = crate;
+                                break;
+                            }
+                        }
                     }
                 }
-                Crate.crates.ElementAt(index).canGrab = false;
-                Crate.crates.ElementAt(index).timer = 20;
+                if (c != null)
+                {
+                    c.canGrab = false;
+                    c.timer = 20;
+                }
 
                 orig(self, grasp, eu);
             }
+            if (self.grasps[grasp] != null)
             orig(self, grasp, eu);
             
         }
 
+        // Physics for grabbing object
         private static void Player_GrabUpdate(On.Player.orig_GrabUpdate orig, Player self, bool eu)
         {
             if (self != null && self.grasps[0] != null)
@@ -99,25 +113,28 @@ namespace TestMod
 
         private static void Player_Update(On.Player.orig_Update orig, Player self, bool eu)
         {
-            //Debug.Log("Reached start");
             if (self.input[0].pckp && self.grasps[0] == null && self.grasps[1] == null)
             {
-                //Debug.Log("Got Past check");
                 float dist = float.PositiveInfinity;
-                Crate c = Crate.crates[0];
-                for (int i = 0; i < crates.Count; i++)
+                foreach (var obj in self.room.physicalObjects[1])
                 {
-                    float temp = Vector2.Distance(self.bodyChunks[0].pos, crates.ElementAt(i).bodyChunks[0].pos);
-                    if (temp < dist)
+                    Crate c = null;
+                    if (obj is Crate crate)
                     {
-                        dist = temp;
-                        c = crates.ElementAt(i);
+                        float temp = Vector2.Distance(self.bodyChunks[0].pos, crate.bodyChunks[0].pos);
+                        if (temp < dist)
+                        {
+                            dist = temp;
+                            c = crate;
+                        }
+                    }
+
+                    if (c != null)
+                    {
+                        c.GrabObj(self);
                     }
                 }
-                c.GrabObj(self);
-                //Debug.Log("Finished Grab");
             }
-            //Debug.Log("Escaped if statement");
 
             orig(self, eu);
         }
@@ -125,6 +142,7 @@ namespace TestMod
         public CrateAbstract Abstr { get; }
         public Crate(CrateAbstract abstr) : base(abstr)
         {
+            debugSpr = new DebugSpr();
             Abstr = abstr;
 
             bodyChunks = new BodyChunk[]
@@ -150,9 +168,9 @@ namespace TestMod
 
             rotation = 0f;
             lastRotation = rotation;
-            crates.Add(this);
         }
 
+        // Grabs object for player with the grabber chunk
         public void GrabObj(Player player)
         {
             if (player.input[0].pckp && player.grasps[0] == null && player.grasps[1] == null)
@@ -171,13 +189,14 @@ namespace TestMod
                     if (Vector2.Distance(grabberPos, player.bodyChunks[0].pos) < 20f && canGrab)
                     {
                         grabPoint = rb2d.transform.InverseTransformPoint(new Vector3(this.grabberPos.x, this.grabberPos.y, 0f) / RoomPhysics.PIXELS_PER_UNIT);
-                        player.Grab(this, 0, 1, Creature.Grasp.Shareability.CanOnlyShareWithNonExclusive, 0.5f, true, true);
+                        player.SlugcatGrab(this, 0);
                     }
                 }
 
             }
         }
         
+
         public override void Update(bool eu)
         {
             lastRotation = rotation;
@@ -185,7 +204,6 @@ namespace TestMod
 
             if (room == null || slatedForDeletetion)
             {
-                crates.Remove(this);
                 return;
             }
 
@@ -204,7 +222,7 @@ namespace TestMod
             var phys = RoomPhysics.Get(room);
             if (!phys.TryGetObject(this, out var obj))
             {
-                obj = phys.CreateObject(this, this);
+                obj = phys.CreateObject(this);
                 obj.transform.position = firstChunk.pos / RoomPhysics.PIXELS_PER_UNIT;
 
                 var rb2d = obj.AddComponent<Rigidbody2D>();
@@ -243,14 +261,17 @@ namespace TestMod
             }
         }
 
+        // Places object in room.
         public override void PlaceInRoom(Room placeRoom)
         {
             base.PlaceInRoom(placeRoom);
 
+            placeRoom.AddObject(debugSpr);
             Vector2 center = placeRoom.MiddleOfTile(abstractPhysicalObject.pos);
             firstChunk.HardSetPosition(center);
         }
 
+        // Plays sound when impacts with terrain, need to rewrite this for unity objects.
         public override void TerrainImpact(int chunk, IntVector2 direction, float speed, bool firstContact)
         {
             base.TerrainImpact(chunk, direction, speed, firstContact);
