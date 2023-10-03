@@ -88,7 +88,7 @@ namespace TestMod
                         num2 /= 2f;
                     }
 
-                    if (self.enteringShortCut == null || dist > num)
+                    if (self.enteringShortCut == null && dist > num * 1.53f)
                     {
                         c = 2 * -a * (dist - num) * (1f - num2);
                     }
@@ -100,7 +100,7 @@ namespace TestMod
                         if (self.bodyChunks[1].ContactPoint.y == -1)
                         {
                             (self.grasps[0].grabbedChunk.owner as Crate).grabberPos += c;
-                            rb2d.AddForce(c * 10f);
+                            rb2d.AddForce(c * 3f);
                             rb2d.position += (c / RoomPhysics.PIXELS_PER_UNIT);
                         }
 
