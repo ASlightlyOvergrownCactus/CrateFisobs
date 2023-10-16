@@ -229,17 +229,23 @@ namespace TestMod
                 rb2d.bodyType = RigidbodyType2D.Dynamic;
                 rb2d.drag = 0f;
                 rb2d.gravityScale = 0.5f;
+                rb2d.WakeUp();
 
-                var box = obj.AddComponent<BoxCollider2D>();
-                box.size = Vector2.one * 100f / RoomPhysics.PIXELS_PER_UNIT;
+                // This is where the actual shape is made
+                var polygon = obj.AddComponent<PolygonCollider2D>();
+                Vector2[] shape = { new Vector2(-0.5f, -0.5f) / RoomPhysics.PIXELS_PER_UNIT, new Vector2(0.5f, -0.5f) * 100f / RoomPhysics.PIXELS_PER_UNIT, new Vector2(0.5f, 0.5f) * 100f / RoomPhysics.PIXELS_PER_UNIT, new Vector2(-0.5f, 0.5f) * 100f / RoomPhysics.PIXELS_PER_UNIT};
+                // SetPath is used to define the shape of the collider. The index value is which part of it we're setting. Check https://docs.unity3d.com/ScriptReference/PolygonCollider2D.SetPath.html for more info.
+                polygon.points = shape;
+                //polygon.offset = firstChunk.pos / RoomPhysics.PIXELS_PER_UNIT + Vector2.one * 10 / RoomPhysics.PIXELS_PER_UNIT;
             }
             else
             {
+                
                 var rb2d = obj.GetComponent<Rigidbody2D>();
                 firstChunk.pos = rb2d.position * RoomPhysics.PIXELS_PER_UNIT;
                 firstChunk.vel = rb2d.velocity * 40f * RoomPhysics.PIXELS_PER_UNIT;
                 rotation = -rb2d.rotation;
-
+                Debug.Log(rb2d.position);
                 if(Input.GetKey(KeyCode.B))
                 {
                     rb2d.velocity += Custom.DirVec(rb2d.position * RoomPhysics.PIXELS_PER_UNIT, (Vector2)Futile.mousePosition + room.game.cameras[0].pos) * 3f * 40f / RoomPhysics.PIXELS_PER_UNIT;
@@ -301,7 +307,7 @@ namespace TestMod
 
         public void DrawSprites(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
         {
-            sLeaser.sprites[0].SetPosition(Vector2.Lerp(firstChunk.lastPos, firstChunk.pos, timeStacker) - camPos);
+            sLeaser.sprites[0].SetPosition(Vector2.Lerp(bodyChunks[0].lastPos, bodyChunks[0].pos, timeStacker) - camPos);
             sLeaser.sprites[0].rotation = Mathf.LerpAngle(lastRotation, rotation, timeStacker);
 
             sLeaser.sprites[1].SetPosition(Vector2.Lerp(bodyChunks[1].lastPos, bodyChunks[1].pos, timeStacker) - camPos);

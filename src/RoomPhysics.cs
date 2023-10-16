@@ -340,6 +340,7 @@ namespace TestMod
 
         }
 
+        // Called from Room_Update, Used for collision to bodyChunks/floating water
         private void LateUpdate()
         {
             WaterFloatrb();
@@ -362,7 +363,7 @@ namespace TestMod
             }
         }
 
-
+        // Collision between bodyChunks and RigidBodies
         private void CheckBodyChunkAgainstrb()
         {
 
@@ -379,97 +380,36 @@ namespace TestMod
                             ContactFilter2D CF = new ContactFilter2D();
                             CF.useLayerMask = true;
                             CF.layerMask = ~(1 << 2);
-                            Collider2D chosen = new Collider2D();
-                            Collider2D[] result = new Collider2D[5];
-                            int NumberOfresult = _physics.OverlapCircle((b.pos) / PIXELS_PER_UNIT, (b.rad + b.TerrainRad) / PIXELS_PER_UNIT, CF, result);
+                            
+                            //_physics.OverlapCircle((b.pos) / PIXELS_PER_UNIT, (b.rad + b.TerrainRad) / PIXELS_PER_UNIT, CF, result);
 
 
-
-
-                            if (result != null)
-                            {
-
-                                // b.contactPoint.y = -1;
-
-                                RaycastHit2D rayresult = _physics.Raycast(b.pos / PIXELS_PER_UNIT, b.vel.normalized, (b.vel.magnitude + b.rad) / PIXELS_PER_UNIT, ~(1 << 2));
-
-                                if (NumberOfresult > 0)
+                                if (item.Key is Crate)
                                 {
-                                    //rayresult.rigidbody.AddForceAtPosition(b.vel/PIXELS_PER_UNIT/40, rayresult.point);
-                                    //  b.pos +=(rayresult.point*PIXELS_PER_UNIT-b.vel.normalized*b.rad);
-
-                                    if (NumberOfresult > 1)
+                                    Vector2 oldPos = b.pos;
+                                    Crate c = item.Key as Crate;
+                                var phys = RoomPhysics.Get(c.room);
+                                    if (phys.TryGetObject(c, out var obje))
                                     {
-                                        int index = 0;
-                                        float min = 100000;
-                                        for (int i = 0; i < NumberOfresult - 1; i++)
-                                        {
-                                            if (Math.Abs((result[i].attachedRigidbody.position * PIXELS_PER_UNIT - b.pos).magnitude) < min)
-                                            {
-                                                min = Math.Abs((result[i].attachedRigidbody.position * PIXELS_PER_UNIT - b.pos).magnitude);
-                                                index = i;
-                                            }
-                                        }
-                                        chosen = result[index];
-                                    }
-                                    else
-                                    {
-                                        chosen = result[0];
-                                    }
+                                        
+
+                                    Vector2[] hitPoint = ClosestPointToRb(obje.gameObject, b.pos, b.vel, b.rad, b.TerrainRad);
+
+                                    (item.Key as Crate).debugSpr.NumberOfPoint[0] = hitPoint[0];
+                                    (item.Key as Crate).debugSpr.NumberOfPoint[1] = hitPoint[1];
+
+                                    // Corners of polygon
+                                    (item.Key as Crate).debugSpr.NumberOfPoint[2] = obje.GetComponent<Rigidbody2D>().position;
+                                    (item.Key as Crate).debugSpr.NumberOfPoint[3] = obje.GetComponent<PolygonCollider2D>().points[1];
+                                    (item.Key as Crate).debugSpr.NumberOfPoint[4] = obje.GetComponent<PolygonCollider2D>().points[2];
+                                    (item.Key as Crate).debugSpr.NumberOfPoint[5] = obje.GetComponent<PolygonCollider2D>().points[3];
 
 
-                                    if (item.Key is Crate)
-                                    {
-                                        // bool within = IsPointInRb(chosen.gameObject, b.pos + b.vel);
-
-                                        Vector2[] hitPoint = CloestPointToRb(chosen.gameObject, b.pos, b.vel, b.rad, b.TerrainRad);
-
-                                        //b.vel.x *= b.owner.surfaceFriction;
-                                        //b.vel.y *= 0;
-                                        //b.vel += result.attachedRigidbody.velocity / 40 * PIXELS_PER_UNIT;
-                                        if (PointInRb(chosen.gameObject, b.pos + b.vel.normalized * b.rad + b.vel))
-                                        {
-                                            b.vel.x *= b.owner.surfaceFriction;
-                                            b.vel.y *= 0;
-                                            //b.vel.y *= b.owner.bounce * -1;
-                                        }
-                                         b.contactPoint.y = -1;
-                                        //if (within)
-                                        //{
-                                        // b.pos = b.pos + (hitPoint[0] - hitPoint[1]);
-                                        b.HardSetPosition(b.pos + (hitPoint[0] - hitPoint[1]));
-                                        //  item.Value.GetComponent<Rigidbody2D>().AddForceAtPosition(-(hitPoint - b.pos) *(1/ PIXELS_PER_UNIT) *(1/ 40), hitPoint * PIXELS_PER_UNIT);
-
-                                        //}
-                                        //else
-                                        //{
-                                        // b.pos = b.pos + (b.pos  - hitPoint);
-
-                                        //  item.Value.GetComponent<Rigidbody2D>().AddForceAtPosition(-(b.pos - hitPoint) * (1 / PIXELS_PER_UNIT) * (1 / 40), hitPoint * PIXELS_PER_UNIT);
-                                        //}
-
-
-
-                                        Crate c = item.Key as Crate;
-                                        //c.Collide(b.owner, 0, b.index);
-
-                                        (item.Key as Crate).debugSpr.NumberOfPoint[0] = hitPoint[0];
-                                        (item.Key as Crate).debugSpr.NumberOfPoint[1] = hitPoint[1];
-
-                                    }
-
-                                    //} else if(NumberOfresult>1)
-                                    //{
-                                    //    b.pos = b.lastPos;
-                                    //}
                                 }
-
-                            }
+                                }                           
                         }
                     }
                 }
-
-
             }
         }
         public Dictionary<UpdatableAndDeletable, GameObject> ObjList { get { return this._linkedObjects; } }
@@ -477,8 +417,8 @@ namespace TestMod
         public bool IsPointInRb(GameObject obj, Vector2 p)
         {
             p = obj.transform.InverseTransformPoint(p / PIXELS_PER_UNIT);
-            float width = obj.GetComponent<BoxCollider2D>().size.x / 2;
-            float height = obj.GetComponent<BoxCollider2D>().size.y / 2;
+            float width = Vector2.Distance(obj.GetComponent<PolygonCollider2D>().GetPath(0)[0], obj.GetComponent<PolygonCollider2D>().GetPath(0)[1]) / 2;
+            float height = Vector2.Distance(obj.GetComponent<PolygonCollider2D>().GetPath(0)[1], obj.GetComponent<PolygonCollider2D>().GetPath(0)[2]) / 2;
             if (Math.Abs(p.x) < width || Math.Abs(p.y) < height)
             {
                 return true;
@@ -488,23 +428,21 @@ namespace TestMod
         public bool PointInRb(GameObject obj, Vector2 p)
         {
             p = obj.transform.InverseTransformPoint(p / PIXELS_PER_UNIT);
-            float width = obj.GetComponent<BoxCollider2D>().size.x / 2;
-            float height = obj.GetComponent<BoxCollider2D>().size.y / 2;
+            float width = Vector2.Distance(obj.GetComponent<PolygonCollider2D>().GetPath(0)[0], obj.GetComponent<PolygonCollider2D>().GetPath(0)[1]) / 2;
+            float height = Vector2.Distance(obj.GetComponent<PolygonCollider2D>().GetPath(0)[1], obj.GetComponent<PolygonCollider2D>().GetPath(0)[2]) / 2;
             if (Math.Abs(p.x) < width && Math.Abs(p.y) < height)
             {
                 return true;
             }
             return false;
         }
-
-
         public bool IsPointInAnyRb(Vector2 p)
         {
             foreach (var item in this._linkedObjects)
             {
                 Vector2 point = item.Value.transform.InverseTransformPoint(p / PIXELS_PER_UNIT);
-                float width = item.Value.GetComponent<BoxCollider2D>().size.x / 2;
-                float height = item.Value.GetComponent<BoxCollider2D>().size.y / 2;
+                float width = Vector2.Distance(item.Value.GetComponent<PolygonCollider2D>().GetPath(0)[0], item.Value.GetComponent<PolygonCollider2D>().GetPath(0)[1]) / 2;
+                float height = Vector2.Distance(item.Value.GetComponent<PolygonCollider2D>().GetPath(0)[1], item.Value.GetComponent<PolygonCollider2D>().GetPath(0)[2]) / 2;
                 if (Math.Abs(point.x) < width && Math.Abs(point.y) < height)
                 {
                     return true;
@@ -513,7 +451,7 @@ namespace TestMod
             return false;
         }
 
-        public Vector2[] CloestPointToRb(GameObject obj, Vector2 p, Vector2 pVel, float rad, float terrainRad)
+        public Vector2[] ClosestPointToRb(GameObject obj, Vector2 p, Vector2 pVel, float rad, float terrainRad)
         {
 
             Vector2 relativePoint = obj.transform.InverseTransformPoint((p) / PIXELS_PER_UNIT);
@@ -521,8 +459,8 @@ namespace TestMod
             rad /= PIXELS_PER_UNIT;
             Vector2[] hitPoint = new Vector2[2];
 
-            float width = obj.GetComponent<BoxCollider2D>().size.x / 2;
-            float height = obj.GetComponent<BoxCollider2D>().size.y / 2;
+            float width = Vector2.Distance(obj.GetComponent<PolygonCollider2D>().GetPath(0)[0], obj.GetComponent<PolygonCollider2D>().GetPath(0)[1]) / 2;
+            float height = Vector2.Distance(obj.GetComponent<PolygonCollider2D>().GetPath(0)[1], obj.GetComponent<PolygonCollider2D>().GetPath(0)[2]) / 2;
             if (Math.Abs(relativePoint.x) < width || Math.Abs(relativePoint.y) < height)
             {
 
@@ -549,8 +487,6 @@ namespace TestMod
             hitPoint[1] = obj.transform.TransformPoint(hitPoint[1]) * PIXELS_PER_UNIT;
             return hitPoint;
         }
-
-
 
         public Collider2D IsChunkTouchingGameObject(GameObject obj, Vector2 p, float rad)
         {
