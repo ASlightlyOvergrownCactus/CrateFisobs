@@ -1,7 +1,10 @@
-﻿using RWCustom;
+﻿using Rewired.UI.ControlMapper;
+using RWCustom;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -11,7 +14,12 @@ namespace TestMod
     {
         public const float PIXELS_PER_UNIT = 20f;
 
+        public const float OBJECT_LAYER = 1 << 2;
+
+        private float water_level = 0;
+        private float WATER_LEVEL { get { return water_level / PIXELS_PER_UNIT; } set { water_level = value; } }
         private static readonly Dictionary<Room, RoomPhysics> _systems = new();
+        public static int sceneNumber = 0;
 
         private readonly Room _room;
         private readonly Scene _scene;
@@ -24,16 +32,108 @@ namespace TestMod
             On.Room.Update += Room_Update;
             On.RainWorldGame.ShutDownProcess += RainWorldGame_ShutDownProcess;
             On.AbstractRoom.Abstractize += AbstractRoom_Abstractize;
+            On.ProcessManager.PostSwitchMainProcess += ProcessManager_PostSwitchMainProcess;
+            On.ArenaSitting.SessionEnded += ArenaSitting_SessionEnded;
+            On.ArenaSitting.ArenaPlayer.Reset += ArenaPlayer_Reset; 
+            // Fix your typos rain world!!!!!!! wraghhhhhh!!!!! (wrath of 1000 slugcats)
+            //On.Room.GetTile_int_int += Room_GetTile_int_int;
+            //On.PhysicalObject.IsTileSolid += PhysicalObject_IsTileSolid;
+        }
+
+
+        private static void ArenaPlayer_Reset(On.ArenaSitting.ArenaPlayer.orig_Reset orig, ArenaSitting.ArenaPlayer self)
+        {
+            foreach (var system in _systems.Values)
+            {
+                system.Dispose();
+            }
+
+            _systems.Clear();
+
+            orig(self);
+        }
+
+        private static void ArenaSitting_SessionEnded(On.ArenaSitting.orig_SessionEnded orig, ArenaSitting self, ArenaGameSession session)
+        {
+            foreach (var system in _systems.Values)
+            {
+                system.Dispose();
+            }
+
+            _systems.Clear();
+
+            orig(self, session);
+        }
+        private static void ProcessManager_PostSwitchMainProcess(On.ProcessManager.orig_PostSwitchMainProcess orig, ProcessManager self, ProcessManager.ProcessID ID)
+        {
+            if (self.currentMainLoop != null && self.currentMainLoop is RainWorldGame)
+            {
+                RainWorldGame rainWorldGame = self.currentMainLoop as RainWorldGame;
+
+                if (rainWorldGame.IsArenaSession)
+                {
+                    _systems.TryGetValue(rainWorldGame.GetArenaGameSession.room.abstractRoom.realizedRoom, out var system);
+                    system.Dispose();
+                }
+            }
+
+            orig(self, ID);
+
+        }
+
+        private static bool PhysicalObject_IsTileSolid(On.PhysicalObject.orig_IsTileSolid orig, PhysicalObject self, int bChunk, int relativeX, int relativeY)
+        {
+            if (orig(self, bChunk, relativeX, relativeY)) return true;
+            if (self.room.ReadyForPlayer)
+            {
+                foreach (KeyValuePair<UpdatableAndDeletable, GameObject> item in RoomPhysics.Get(self.room)._linkedObjects)
+                {
+                    if (RoomPhysics.Get(self.room).PointInRb(item.Value, self.bodyChunks[bChunk].pos + new Vector2(relativeX * 20, relativeY * 20)))
+                    {
+
+                        return true;
+
+                    }
+                }
+            }
+            return false;
+        }
+
+        public static Room.Tile Room_GetTile_int_int(On.Room.orig_GetTile_int_int orig, Room self, int x, int y)
+        {
+
+            if (self.ReadyForPlayer)
+            {
+                var obj = RoomPhysics.Get(self);
+                foreach (KeyValuePair<UpdatableAndDeletable, GameObject> item in obj._linkedObjects)
+                {
+                    if (obj.PointInRb(item.Value, new Vector2(x * 20, y * 20)))
+                    {
+                        Room.Tile tile = new Room.Tile(x, y, Room.Tile.TerrainType.Solid, false, false, false, 0, 0);
+                        return tile;
+                    }
+                }
+            }
+            return orig(self, x, y);
         }
 
         private static void Room_Update(On.Room.orig_Update orig, Room self)
         {
-            if(_systems.TryGetValue(self, out var system))
+
+
+            if (_systems.TryGetValue(self, out var system))
             {
                 system.Update();
+                orig(self);
+                system.LateUpdate();
+            }
+            else
+            {
+                orig(self);
             }
 
-            orig(self);
+
+
         }
 
         private static void RainWorldGame_ShutDownProcess(On.RainWorldGame.orig_ShutDownProcess orig, RainWorldGame self)
@@ -59,6 +159,7 @@ namespace TestMod
             orig(self);
         }
 
+        // Check this with the grab code weirdness
         public static RoomPhysics Get(Room room)
         {
             if (!_systems.TryGetValue(room, out var system))
@@ -73,13 +174,16 @@ namespace TestMod
         private RoomPhysics(Room room)
         {
             _room = room;
+            this.water_level = room.floatWaterLevel;
 
             // Create a scene with physics independent from the main scene
-            _scene = SceneManager.CreateScene($"Physics System {room.abstractRoom.name}", new CreateSceneParameters() { localPhysicsMode = LocalPhysicsMode.Physics2D });
+            _scene = SceneManager.CreateScene($"Physics System {room.abstractRoom.name}" + sceneNumber, new CreateSceneParameters() { localPhysicsMode = LocalPhysicsMode.Physics2D });
             _physics = _scene.GetPhysicsScene2D();
 
             // Add room tiles as a collider
             RefreshTiles();
+
+            sceneNumber++;
         }
 
         public bool TryGetObject(UpdatableAndDeletable owner, out GameObject gameObj)
@@ -90,6 +194,7 @@ namespace TestMod
         public GameObject CreateObject(UpdatableAndDeletable owner)
         {
             var obj = new GameObject();
+            obj.layer = 1 << 2;
             SceneManager.MoveGameObjectToScene(obj, _scene);
             try
             {
@@ -100,12 +205,18 @@ namespace TestMod
                 UnityEngine.Object.Destroy(obj);
                 throw;
             }
+
             return obj;
         }
 
+
+
+        //Layer 1 is Floor , Layer 2 is everything else
         private void RefreshTiles()
         {
             var obj = new GameObject("Room Geometry");
+            obj.layer = (1 << 1);
+            obj.isStatic = true;
             SceneManager.MoveGameObjectToScene(obj, _scene);
 
             var rb2d = obj.AddComponent<Rigidbody2D>();
@@ -120,32 +231,73 @@ namespace TestMod
             var tiles = _room.Tiles;
 
             // Make polygons
-            for(int y = 0; y < height; y++)
+            for (int y = 0; y < height; y++)
             {
                 int? startX = null;
 
-                for(int x = 0; x <= width; x++)
+                for (int x = 0; x <= width; x++)
                 {
                     var tile = x < width ? tiles[x, y] : null;
-                    if (tile != null && tile.Solid)
+                    if (tile != null && tile.Terrain == Room.Tile.TerrainType.Solid)
                     {
-                        if(startX == null)
+                        if (startX == null)
                         {
                             startX = x;
                         }
                     }
                     else
                     {
-                        if(startX != null)
+                        if (startX != null)
                         {
                             var col = obj.AddComponent<BoxCollider2D>();
-                            
+
                             col.size = new Vector2(x - startX.Value, 1f) * 20f / PIXELS_PER_UNIT;
                             col.offset = new Vector2(startX.Value, y) * 20f / PIXELS_PER_UNIT + col.size / 2f;
                             col.usedByComposite = true;
 
                             startX = null;
                         }
+                    }
+                    Room.SlopeDirection slope = _room.IdentifySlope(new IntVector2(x, y));
+                    if (tile != null && slope != Room.SlopeDirection.Broken && tiles[x, y].Terrain == Room.Tile.TerrainType.Slope)
+                    {
+
+                        if (slope == Room.SlopeDirection.UpRight)
+                        {
+                            var col = obj.AddComponent<PolygonCollider2D>();
+
+                            col.points = new Vector2[3] { new Vector2(-1, 1) * 20f / PIXELS_PER_UNIT, new Vector2(-1, -1) * 20f / PIXELS_PER_UNIT, new Vector2(1, -1) * 20f / PIXELS_PER_UNIT };
+                            col.offset = new Vector2(x, y) * 20f / PIXELS_PER_UNIT + Vector2.one * 10 / PIXELS_PER_UNIT;
+                            col.usedByComposite = true;
+                        }
+                        else if (slope == Room.SlopeDirection.UpLeft)
+                        {
+                            var col = obj.AddComponent<PolygonCollider2D>();
+
+                            col.points = new Vector2[3] { new Vector2(1, 1) * 20f / PIXELS_PER_UNIT, new Vector2(-1, -1) * 20f / PIXELS_PER_UNIT, new Vector2(1, -1) * 20f / PIXELS_PER_UNIT };
+                            col.offset = new Vector2(x, y) * 20f / PIXELS_PER_UNIT + Vector2.one * 10 / PIXELS_PER_UNIT;
+                            col.usedByComposite = true;
+                        }
+                        else if (slope == Room.SlopeDirection.DownRight)
+                        {
+                            var col = obj.AddComponent<PolygonCollider2D>();
+
+                            col.points = new Vector2[3] { new Vector2(-1, 1) * 20f / PIXELS_PER_UNIT, new Vector2(-1, -1) * 20f / PIXELS_PER_UNIT, new Vector2(1, 1) * 20f / PIXELS_PER_UNIT };
+                            col.offset = new Vector2(x, y) * 20f / PIXELS_PER_UNIT + Vector2.one * 10 / PIXELS_PER_UNIT;
+                            col.usedByComposite = true;
+                        }
+                        else if (slope == Room.SlopeDirection.DownLeft)
+                        {
+                            var col = obj.AddComponent<PolygonCollider2D>();
+
+                            col.points = new Vector2[3] { new Vector2(1, 1) * 20f / PIXELS_PER_UNIT, new Vector2(-1, 1) * 20f / PIXELS_PER_UNIT, new Vector2(-1, -1) * 20f / PIXELS_PER_UNIT };
+                            col.offset = new Vector2(x, y) * 20f / PIXELS_PER_UNIT + Vector2.one * 10 / PIXELS_PER_UNIT;
+                            col.usedByComposite = true;
+                        }
+
+
+
+
                     }
                 }
             }
@@ -154,17 +306,25 @@ namespace TestMod
             compositeCollider.GenerateGeometry();
 
             // Get rid of the original colliders
-            foreach(var col in obj.GetComponents<BoxCollider2D>())
+            foreach (var col in obj.GetComponents<BoxCollider2D>())
             {
                 UnityEngine.Object.Destroy(col);
             }
+            foreach (var col in obj.GetComponents<PolygonCollider2D>())
+            {
+                UnityEngine.Object.Destroy(col);
+            }
+
+
         }
 
         private void Update()
         {
-            foreach(var pair in _linkedObjects)
+            this.water_level = _room.floatWaterLevel;
+            #region UnityObjUpdate
+            foreach (var pair in _linkedObjects)
             {
-                if(pair.Key.slatedForDeletetion || pair.Key.room != _room)
+                if (pair.Key.slatedForDeletetion || pair.Key.room != _room)
                 {
                     UnityEngine.Object.Destroy(pair.Value);
                     _linkedObjects.Remove(pair.Key);
@@ -175,8 +335,167 @@ namespace TestMod
             Physics2D.gravity = new Vector2(0f, -80f);
             _physics.Simulate(1f / 40f);
             Physics2D.gravity = oldGrav;
+            #endregion
+
+
         }
 
+        // Called from Room_Update, Used for collision to bodyChunks/floating water
+        private void LateUpdate()
+        {
+            WaterFloatrb();
+            CheckBodyChunkAgainstrb();
+
+        }
+
+
+        private void WaterFloatrb()
+        {
+
+            foreach (var item in _linkedObjects.ToList())
+            {
+                if (item.Value.GetComponent<Rigidbody2D>().position.y < WATER_LEVEL)
+                {
+                    Vector2 float_ = Vector2.up * (WATER_LEVEL * 4 - item.Value.GetComponent<Rigidbody2D>().position.y);
+                    Debug.Log(float_);
+                    item.Value.GetComponent<Rigidbody2D>().AddForce(float_);
+                }
+            }
+        }
+
+        // Collision between bodyChunks and RigidBodies
+        private void CheckBodyChunkAgainstrb()
+        {
+
+            foreach (var obj in _room.updateList)
+            {
+                if (obj is PhysicalObject Pobj && Pobj.bodyChunks != null && !_linkedObjects.ContainsKey(obj))
+                {
+                    foreach (BodyChunk b in Pobj.bodyChunks.ToList())
+                    {
+
+                        foreach (var item in _linkedObjects.ToList())
+                        {
+
+                            ContactFilter2D CF = new ContactFilter2D();
+                            CF.useLayerMask = true;
+                            CF.layerMask = ~(1 << 2);
+                            
+                            //_physics.OverlapCircle((b.pos) / PIXELS_PER_UNIT, (b.rad + b.TerrainRad) / PIXELS_PER_UNIT, CF, result);
+
+
+                                if (item.Key is Crate)
+                                {
+                                    Vector2 oldPos = b.pos;
+                                    Crate c = item.Key as Crate;
+                                var phys = RoomPhysics.Get(c.room);
+                                    if (phys.TryGetObject(c, out var obje))
+                                    {
+                                        
+
+                                    Vector2[] hitPoint = ClosestPointToRb(obje.gameObject, b.pos, b.vel, b.rad, b.TerrainRad);
+
+                                    (item.Key as Crate).debugSpr.NumberOfPoint[0] = hitPoint[0];
+                                    (item.Key as Crate).debugSpr.NumberOfPoint[1] = hitPoint[1];
+
+                                    // Corners of polygon
+                                    (item.Key as Crate).debugSpr.NumberOfPoint[2] = obje.GetComponent<Rigidbody2D>().position;
+                                    (item.Key as Crate).debugSpr.NumberOfPoint[3] = obje.GetComponent<PolygonCollider2D>().points[1];
+                                    (item.Key as Crate).debugSpr.NumberOfPoint[4] = obje.GetComponent<PolygonCollider2D>().points[2];
+                                    (item.Key as Crate).debugSpr.NumberOfPoint[5] = obje.GetComponent<PolygonCollider2D>().points[3];
+
+
+                                }
+                                }                           
+                        }
+                    }
+                }
+            }
+        }
+        public Dictionary<UpdatableAndDeletable, GameObject> ObjList { get { return this._linkedObjects; } }
+
+        public bool IsPointInRb(GameObject obj, Vector2 p)
+        {
+            p = obj.transform.InverseTransformPoint(p / PIXELS_PER_UNIT);
+            float width = Vector2.Distance(obj.GetComponent<PolygonCollider2D>().GetPath(0)[0], obj.GetComponent<PolygonCollider2D>().GetPath(0)[1]) / 2;
+            float height = Vector2.Distance(obj.GetComponent<PolygonCollider2D>().GetPath(0)[1], obj.GetComponent<PolygonCollider2D>().GetPath(0)[2]) / 2;
+            if (Math.Abs(p.x) < width || Math.Abs(p.y) < height)
+            {
+                return true;
+            }
+            return false;
+        }
+        public bool PointInRb(GameObject obj, Vector2 p)
+        {
+            p = obj.transform.InverseTransformPoint(p / PIXELS_PER_UNIT);
+            float width = Vector2.Distance(obj.GetComponent<PolygonCollider2D>().GetPath(0)[0], obj.GetComponent<PolygonCollider2D>().GetPath(0)[1]) / 2;
+            float height = Vector2.Distance(obj.GetComponent<PolygonCollider2D>().GetPath(0)[1], obj.GetComponent<PolygonCollider2D>().GetPath(0)[2]) / 2;
+            if (Math.Abs(p.x) < width && Math.Abs(p.y) < height)
+            {
+                return true;
+            }
+            return false;
+        }
+        public bool IsPointInAnyRb(Vector2 p)
+        {
+            foreach (var item in this._linkedObjects)
+            {
+                Vector2 point = item.Value.transform.InverseTransformPoint(p / PIXELS_PER_UNIT);
+                float width = Vector2.Distance(item.Value.GetComponent<PolygonCollider2D>().GetPath(0)[0], item.Value.GetComponent<PolygonCollider2D>().GetPath(0)[1]) / 2;
+                float height = Vector2.Distance(item.Value.GetComponent<PolygonCollider2D>().GetPath(0)[1], item.Value.GetComponent<PolygonCollider2D>().GetPath(0)[2]) / 2;
+                if (Math.Abs(point.x) < width && Math.Abs(point.y) < height)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public Vector2[] ClosestPointToRb(GameObject obj, Vector2 p, Vector2 pVel, float rad, float terrainRad)
+        {
+
+            Vector2 relativePoint = obj.transform.InverseTransformPoint((p) / PIXELS_PER_UNIT);
+            terrainRad /= PIXELS_PER_UNIT;
+            rad /= PIXELS_PER_UNIT;
+            Vector2[] hitPoint = new Vector2[2];
+
+            float width = Vector2.Distance(obj.GetComponent<PolygonCollider2D>().GetPath(0)[0], obj.GetComponent<PolygonCollider2D>().GetPath(0)[1]) / 2;
+            float height = Vector2.Distance(obj.GetComponent<PolygonCollider2D>().GetPath(0)[1], obj.GetComponent<PolygonCollider2D>().GetPath(0)[2]) / 2;
+            if (Math.Abs(relativePoint.x) < width || Math.Abs(relativePoint.y) < height)
+            {
+
+                if (width - Math.Abs(relativePoint.x) < height - Math.Abs(relativePoint.y))
+                {
+                    hitPoint[0] = new Vector2(width * Math.Sign(relativePoint.x), relativePoint.y);
+                    hitPoint[1] = new Vector2(relativePoint.x - (rad + terrainRad) * Math.Sign(relativePoint.x), relativePoint.y);
+                }
+                else
+                {
+
+                    hitPoint[0] = new Vector2(relativePoint.x, height * Math.Sign(relativePoint.y));
+
+                    hitPoint[1] = new Vector2(relativePoint.x, relativePoint.y - (rad + terrainRad) * Math.Sign(relativePoint.y));
+                }
+            }
+            else
+            {
+                hitPoint[0] = new Vector2(width * Math.Sign(relativePoint.x), height * Math.Sign(relativePoint.y));
+                hitPoint[1] = relativePoint + pVel.normalized * rad;
+
+            }
+            hitPoint[0] = obj.transform.TransformPoint(hitPoint[0]) * PIXELS_PER_UNIT;
+            hitPoint[1] = obj.transform.TransformPoint(hitPoint[1]) * PIXELS_PER_UNIT;
+            return hitPoint;
+        }
+
+        public Collider2D IsChunkTouchingGameObject(GameObject obj, Vector2 p, float rad)
+        {
+            ContactFilter2D CF = new ContactFilter2D();
+            CF.useLayerMask = true;
+            CF.layerMask = ~(1 << 2);
+
+            return _physics.OverlapCircle(p / PIXELS_PER_UNIT, rad / PIXELS_PER_UNIT, CF);
+        }
         private void Dispose()
         {
             SceneManager.UnloadSceneAsync(_scene);

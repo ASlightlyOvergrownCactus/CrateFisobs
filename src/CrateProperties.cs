@@ -23,7 +23,7 @@ namespace TestMod
             }
             else
             {
-                grabability = Player.ObjectGrabability.TwoHands;
+                grabability = Player.ObjectGrabability.Drag;
             }
         }
 
