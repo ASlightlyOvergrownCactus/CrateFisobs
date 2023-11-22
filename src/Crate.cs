@@ -233,19 +233,23 @@ namespace TestMod
 
                 // This is where the actual shape is made
                 var polygon = obj.AddComponent<PolygonCollider2D>();
-                Vector2[] shape = { new Vector2(-0.5f, -0.5f) / RoomPhysics.PIXELS_PER_UNIT, new Vector2(0.5f, -0.5f) * 100f / RoomPhysics.PIXELS_PER_UNIT, new Vector2(0.5f, 0.5f) * 100f / RoomPhysics.PIXELS_PER_UNIT, new Vector2(-0.5f, 0.5f) * 100f / RoomPhysics.PIXELS_PER_UNIT};
+                Vector2[] shape = { new Vector2(-0.5f, -0.5f) * 100f / RoomPhysics.PIXELS_PER_UNIT, new Vector2(0.5f, -0.5f) * 100f / RoomPhysics.PIXELS_PER_UNIT, new Vector2(0.5f, 0.5f) * 100f / RoomPhysics.PIXELS_PER_UNIT, new Vector2(-0.5f, 0.5f) * 100f / RoomPhysics.PIXELS_PER_UNIT};
                 // SetPath is used to define the shape of the collider. The index value is which part of it we're setting. Check https://docs.unity3d.com/ScriptReference/PolygonCollider2D.SetPath.html for more info.
                 polygon.points = shape;
                 //polygon.offset = firstChunk.pos / RoomPhysics.PIXELS_PER_UNIT + Vector2.one * 10 / RoomPhysics.PIXELS_PER_UNIT;
             }
             else
             {
-                
+                foreach (Vector2 vector2 in obj.GetComponent<PolygonCollider2D>().points)
+                {
+                    //Debug.Log(vector2);
+                }
+                //Debug.Log(" ");
                 var rb2d = obj.GetComponent<Rigidbody2D>();
                 firstChunk.pos = rb2d.position * RoomPhysics.PIXELS_PER_UNIT;
                 firstChunk.vel = rb2d.velocity * 40f * RoomPhysics.PIXELS_PER_UNIT;
                 rotation = -rb2d.rotation;
-                Debug.Log(rb2d.position);
+                //Debug.Log(rb2d.position);
                 if(Input.GetKey(KeyCode.B))
                 {
                     rb2d.velocity += Custom.DirVec(rb2d.position * RoomPhysics.PIXELS_PER_UNIT, (Vector2)Futile.mousePosition + room.game.cameras[0].pos) * 3f * 40f / RoomPhysics.PIXELS_PER_UNIT;

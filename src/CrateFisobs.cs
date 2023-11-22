@@ -21,7 +21,7 @@ namespace TestMod
             Icon = new CrateIcon();
 
             SandboxPerformanceCost = new(linear: 0.35f, exponential: 0f);
-
+            
             RegisterUnlock(MetalCrate, parent: MultiplayerUnlocks.SandboxUnlockID.Slugcat, data: 0);
         }
 

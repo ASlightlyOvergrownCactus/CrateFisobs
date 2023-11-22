@@ -366,8 +366,8 @@ namespace TestMod
         // Collision between bodyChunks and RigidBodies
         private void CheckBodyChunkAgainstrb()
         {
-
-            foreach (var obj in _room.updateList)
+            // Foreach error, check exceptionLog
+            foreach (var obj in _room.updateList.ToList())
             {
                 if (obj is PhysicalObject Pobj && Pobj.bodyChunks != null && !_linkedObjects.ContainsKey(obj))
                 {
@@ -388,7 +388,7 @@ namespace TestMod
                                 {
                                     Vector2 oldPos = b.pos;
                                     Crate c = item.Key as Crate;
-                                var phys = RoomPhysics.Get(c.room);
+                                    var phys = RoomPhysics.Get(c.room);
                                     if (phys.TryGetObject(c, out var obje))
                                     {
                                         
@@ -398,13 +398,21 @@ namespace TestMod
                                     (item.Key as Crate).debugSpr.NumberOfPoint[0] = hitPoint[0];
                                     (item.Key as Crate).debugSpr.NumberOfPoint[1] = hitPoint[1];
 
-                                    // Corners of polygon
+                                    // Corners of polygon (remove later)
                                     (item.Key as Crate).debugSpr.NumberOfPoint[2] = obje.GetComponent<Rigidbody2D>().position;
                                     (item.Key as Crate).debugSpr.NumberOfPoint[3] = obje.GetComponent<PolygonCollider2D>().points[1];
                                     (item.Key as Crate).debugSpr.NumberOfPoint[4] = obje.GetComponent<PolygonCollider2D>().points[2];
                                     (item.Key as Crate).debugSpr.NumberOfPoint[5] = obje.GetComponent<PolygonCollider2D>().points[3];
 
-
+                                    // Use Cast() and the IsChunkTouchingGameObject() methods to check for collision.
+                                    foreach (PolygonCollider2D polygon in obje.GetComponents<PolygonCollider2D>())
+                                    {
+                                        Vector2 temp = CastGameObject(polygon, b);
+                                        if (temp != b.pos)
+                                           {
+                                            b.pos = temp;
+                                           }
+                                    }
                                 }
                                 }                           
                         }
@@ -414,6 +422,40 @@ namespace TestMod
         }
         public Dictionary<UpdatableAndDeletable, GameObject> ObjList { get { return this._linkedObjects; } }
 
+        public Vector2 CastGameObject( PolygonCollider2D polygon, BodyChunk b )
+        {
+            Vector2 origPos = b.pos;
+            Vector2 UniPos = b.pos / PIXELS_PER_UNIT;
+            Vector2 UniVel = b.vel / PIXELS_PER_UNIT;
+            Vector2 castB = b.pos + b.vel;
+            Collider2D collider = IsChunkTouchingGameObject(polygon.gameObject, castB, b.rad);
+
+            if (collider != null && collider is PolygonCollider2D && collider as PolygonCollider2D == polygon)
+            {
+                // Need to now correct velocity properly
+                // Replace with Unity CircleCast https://docs.unity3d.com/ScriptReference/PhysicsScene2D.CircleCast.html
+                //Vector2 point = _physics.CircleCast((UniPos), b.rad / PIXELS_PER_UNIT, UniVel.normalized, Vector2.Distance(UniPos - UniVel, UniPos) + 20f).point * PIXELS_PER_UNIT;
+                Vector2 point = _physics.Raycast((UniPos - UniVel), UniVel.normalized, Vector2.Distance(UniPos - UniVel, UniPos) + 20f).point * PIXELS_PER_UNIT;
+                if (Mathf.Abs(origPos.y - point.y) > 0.01f)
+                {
+                    int dir = Math.Sign(origPos.y - point.y);
+                    if (Mathf.Abs(b.vel.y) >= b.owner.impactTreshhold) b.owner.TerrainImpact(b.index, new IntVector2(0, dir), Mathf.Abs(b.vel.y), b.contactPoint.y != dir);
+                    if (b.contactPoint.y == 0) b.contactPoint.y = dir;
+                    b.vel.y = Mathf.Abs(b.vel.y) * Mathf.Sign(b.pos.y - collider.transform.position.y) * b.owner.bounce;
+                    b.vel.x *= Mathf.Clamp01(b.owner.surfaceFriction * 2f);
+                    if (b.index == 1 && b.owner is Player ply)
+                    {
+                        ply.feetStuckPos = ply.bodyChunks[1].pos;
+                    }
+                }
+                if (point != Vector2.zero ) 
+                {
+                    return point;
+                }
+            }
+
+            return origPos;
+        }
         public bool IsPointInRb(GameObject obj, Vector2 p)
         {
             p = obj.transform.InverseTransformPoint(p / PIXELS_PER_UNIT);
