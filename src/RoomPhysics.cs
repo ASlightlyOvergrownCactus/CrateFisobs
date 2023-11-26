@@ -34,12 +34,94 @@ namespace TestMod
             On.AbstractRoom.Abstractize += AbstractRoom_Abstractize;
             On.ProcessManager.PostSwitchMainProcess += ProcessManager_PostSwitchMainProcess;
             On.ArenaSitting.SessionEnded += ArenaSitting_SessionEnded;
-            On.ArenaSitting.ArenaPlayer.Reset += ArenaPlayer_Reset; 
+            On.ArenaSitting.ArenaPlayer.Reset += ArenaPlayer_Reset;
+            On.AbstractPhysicalObject.Realize += AbstractPhysicalObject_Realize;
+            On.AbstractPhysicalObject.Abstractize += AbstractPhysicalObject_Abstractize;
+            On.AbstractCreature.Realize += AbstractCreature_Realize;
+            On.AbstractCreature.Abstractize += AbstractCreature_Abstractize;
             // Fix your typos rain world!!!!!!! wraghhhhhh!!!!! (wrath of 1000 slugcats)
             //On.Room.GetTile_int_int += Room_GetTile_int_int;
             //On.PhysicalObject.IsTileSolid += PhysicalObject_IsTileSolid;
         }
 
+        private static void AbstractCreature_Abstractize(On.AbstractCreature.orig_Abstractize orig, AbstractCreature self, WorldCoordinate coord)
+        {
+            if (RoomPhysics.Get(self.realizedObject.room).TryGetObject(self.realizedObject, out var obj))
+            {
+                UnityEngine.Object.Destroy(obj);
+            }
+            orig(self, coord);
+        }
+
+        private static void AbstractCreature_Realize(On.AbstractCreature.orig_Realize orig, AbstractCreature self)
+        {
+            orig(self);
+            var obj = new GameObject();
+            obj.layer = 1 << 3;
+            SceneManager.MoveGameObjectToScene(obj, RoomPhysics.Get(self.realizedObject.room)._scene);
+            try
+            {
+                RoomPhysics.Get(self.realizedObject.room)._linkedObjects.Add(self.realizedObject, obj);
+                obj.tag = "RW";
+            }
+            catch
+            {
+                UnityEngine.Object.Destroy(obj);
+                throw;
+            }
+            var rb2d = obj.AddComponent<Rigidbody2D>();
+            rb2d.bodyType = RigidbodyType2D.Dynamic;
+            rb2d.drag = 0f;
+            rb2d.gravityScale = 0.5f;
+            rb2d.WakeUp();
+
+            // This is where the actual shape is made
+            for (int i = 0; i < self.realizedObject.bodyChunks.Length; i++)
+            {
+                var circle = obj.AddComponent<CircleCollider2D>();
+                circle.radius = self.realizedObject.bodyChunks[i].rad / 20f;
+            }
+        }
+
+        private static void AbstractPhysicalObject_Abstractize(On.AbstractPhysicalObject.orig_Abstractize orig, AbstractPhysicalObject self, WorldCoordinate coord)
+        {
+            if (RoomPhysics.Get(self.realizedObject.room).TryGetObject(self.realizedObject, out var obj))
+            {
+                UnityEngine.Object.Destroy(obj);
+            }
+            orig(self, coord);
+        }
+
+        private static void AbstractPhysicalObject_Realize(On.AbstractPhysicalObject.orig_Realize orig, AbstractPhysicalObject self)
+        {
+            orig(self);
+            var obj = new GameObject();
+            obj.layer = 1 << 3;
+            SceneManager.MoveGameObjectToScene(obj, RoomPhysics.Get(self.realizedObject.room)._scene);
+            try
+            {
+                RoomPhysics.Get(self.realizedObject.room)._linkedObjects.Add(self.realizedObject, obj);
+            }
+            catch
+            {
+                UnityEngine.Object.Destroy(obj);
+                throw;
+            }
+            var rb2d = obj.AddComponent<Rigidbody2D>();
+            rb2d.bodyType = RigidbodyType2D.Dynamic;
+            rb2d.drag = 0f;
+            rb2d.gravityScale = 0.5f;
+            rb2d.WakeUp();
+
+            // This is where the actual shape is made
+            for (int i = 0; i < self.realizedObject.bodyChunks.Length; i++)
+            {
+                var circle = obj.AddComponent<CircleCollider2D>();
+                circle.radius = self.realizedObject.bodyChunks[i].rad / 20f;
+            }
+
+
+        }
 
         private static void ArenaPlayer_Reset(On.ArenaSitting.ArenaPlayer.orig_Reset orig, ArenaSitting.ArenaPlayer self)
         {
@@ -159,7 +241,6 @@ namespace TestMod
             orig(self);
         }
 
-        // Check this with the grab code weirdness
         public static RoomPhysics Get(Room room)
         {
             if (!_systems.TryGetValue(room, out var system))
@@ -211,13 +292,17 @@ namespace TestMod
 
 
 
-        //Layer 1 is Floor , Layer 2 is everything else
+        //Layer 1 is Floor , Layer 2 is Unity Objects, Layer 3 is RW Objects
         private void RefreshTiles()
         {
             var obj = new GameObject("Room Geometry");
             obj.layer = (1 << 1);
             obj.isStatic = true;
             SceneManager.MoveGameObjectToScene(obj, _scene);
+
+            // Makes rw objects ignore eachothers unity collision and the unity level collision
+            Physics2D.IgnoreLayerCollision(1 << 3, 1 << 3);
+            Physics2D.IgnoreLayerCollision(1 << 3, 1 << 1);
 
             var rb2d = obj.AddComponent<Rigidbody2D>();
             rb2d.bodyType = RigidbodyType2D.Static;
@@ -529,7 +614,7 @@ namespace TestMod
             hitPoint[1] = obj.transform.TransformPoint(hitPoint[1]) * PIXELS_PER_UNIT;
             return hitPoint;
         }
-
+        //test
         public Collider2D IsChunkTouchingGameObject(GameObject obj, Vector2 p, float rad)
         {
             ContactFilter2D CF = new ContactFilter2D();

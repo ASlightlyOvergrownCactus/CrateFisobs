@@ -16,7 +16,7 @@ namespace TestMod
         private Vector2 grabPoint;
         public bool canGrab;
         public int timer;
-
+        //test
         public DebugSpr debugSpr;
 
         #region Hooks and Helpers
