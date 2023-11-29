@@ -22,9 +22,9 @@ namespace TestMod
         public static int sceneNumber = 0;
 
         private readonly Room _room;
-        private readonly Scene _scene;
+        public readonly Scene _scene;
         private readonly PhysicsScene2D _physics;
-        private readonly Dictionary<UpdatableAndDeletable, GameObject> _linkedObjects = new();
+        public readonly Dictionary<UpdatableAndDeletable, GameObject> _linkedObjects = new();
 
         #region Hooks and Helpers
         public static void AddHooks()
@@ -35,10 +35,11 @@ namespace TestMod
             On.ProcessManager.PostSwitchMainProcess += ProcessManager_PostSwitchMainProcess;
             On.ArenaSitting.SessionEnded += ArenaSitting_SessionEnded;
             On.ArenaSitting.ArenaPlayer.Reset += ArenaPlayer_Reset;
-            On.AbstractPhysicalObject.Realize += AbstractPhysicalObject_Realize;
-            On.AbstractPhysicalObject.Abstractize += AbstractPhysicalObject_Abstractize;
-            On.AbstractCreature.Realize += AbstractCreature_Realize;
-            On.AbstractCreature.Abstractize += AbstractCreature_Abstractize;
+            //On.AbstractPhysicalObject.Realize += AbstractPhysicalObject_Realize;
+            //On.AbstractPhysicalObject.Abstractize += AbstractPhysicalObject_Abstractize;
+            //On.AbstractCreature.Realize += AbstractCreature_Realize;
+            //On.AbstractCreature.Abstractize += AbstractCreature_Abstractize;
+            
             // Fix your typos rain world!!!!!!! wraghhhhhh!!!!! (wrath of 1000 slugcats)
             //On.Room.GetTile_int_int += Room_GetTile_int_int;
             //On.PhysicalObject.IsTileSolid += PhysicalObject_IsTileSolid;
@@ -62,7 +63,6 @@ namespace TestMod
             try
             {
                 RoomPhysics.Get(self.realizedObject.room)._linkedObjects.Add(self.realizedObject, obj);
-                obj.tag = "RW";
             }
             catch
             {
@@ -271,26 +271,6 @@ namespace TestMod
         {
             return _linkedObjects.TryGetValue(owner, out gameObj);
         }
-
-        public GameObject CreateObject(UpdatableAndDeletable owner)
-        {
-            var obj = new GameObject();
-            obj.layer = 1 << 2;
-            SceneManager.MoveGameObjectToScene(obj, _scene);
-            try
-            {
-                _linkedObjects.Add(owner, obj);
-            }
-            catch
-            {
-                UnityEngine.Object.Destroy(obj);
-                throw;
-            }
-
-            return obj;
-        }
-
-
 
         //Layer 1 is Floor , Layer 2 is Unity Objects, Layer 3 is RW Objects
         private void RefreshTiles()
