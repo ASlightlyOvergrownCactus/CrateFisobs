@@ -15,6 +15,8 @@ namespace TestMod
         public bool isUniObject;
         public Rigidbody2D rb2d;
         public UpdatableAndDeletable owner;
+        public AbstractPhysicalObject physObj;
+        public CircleCollider2D[] circles;
         // For Unity Objects
         public UnityObject(RoomPhysics phys, UnityEngine.Vector2[] shape, RigidbodyType2D type, float drag, float gravityScale, UpdatableAndDeletable owner) 
         {
@@ -49,15 +51,62 @@ namespace TestMod
         }
 
         // For Rainworld Objects
-        public UnityObject(RoomPhysics phys, float rad, Rigidbody2D type, float drag, float gravityScale, UpdatableAndDeletable owner)
+        public UnityObject(RoomPhysics phys, RigidbodyType2D type, float drag, float gravityScale, AbstractPhysicalObject physObj)
         {
+            obj = new GameObject();
+            rb2d = obj.AddComponent<Rigidbody2D>();
+            rb2d.bodyType = type;
+            rb2d.drag = drag;
+            rb2d.gravityScale = gravityScale;
+            rb2d.WakeUp();
 
+            // Circles for each bodyChunk
+            circles = new CircleCollider2D[physObj.realizedObject.bodyChunks.Length];
+            for (int i = 0; i < physObj.realizedObject.bodyChunks.Length; i++)
+            {
+                circles[i] = obj.AddComponent<CircleCollider2D>();
+                circles[i].radius = physObj.realizedObject.bodyChunks[i].rad / 20f;
+            }
+            this.physObj = physObj;
+
+            obj.layer = 1 << 3;
+
+            try
+            {
+                phys._linkedObjects.Add(owner, obj);
+            }
+            catch
+            {
+                UnityEngine.Object.Destroy(obj);
+                Destroy(this);
+                throw;
+            }
+
+            isUniObject = false;
         }
 
 
         public void Destroy(UnityObject obj)
         {
             MonoBehaviour.Destroy(obj);
+        }
+
+        public void Update()
+        {
+            if (isUniObject)
+            {
+
+            }
+
+            else
+            {
+                rb2d.position.Set(physObj.realizedObject.firstChunk.pos.y / RoomPhysics.PIXELS_PER_UNIT, physObj.realizedObject.firstChunk.pos.y / RoomPhysics.PIXELS_PER_UNIT);
+                for (int i = 0; i < circles.Length; i++)
+                {
+                    UnityEngine.Vector2 offset = rb2d.position - (physObj.realizedObject.bodyChunks[i].pos / RoomPhysics.PIXELS_PER_UNIT);
+                    circles[i].offset = offset;
+                }
+            }
         }
 
 
