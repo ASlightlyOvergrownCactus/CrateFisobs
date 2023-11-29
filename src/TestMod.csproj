@@ -14,5 +14,4 @@
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(SolutionDir)mod/plugins/" />
   </Target>
-
 </Project>
