@@ -2,6 +2,7 @@
 using RWCustom;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -15,6 +16,8 @@ namespace TestMod
         public const float PIXELS_PER_UNIT = 20f;
 
         public const float OBJECT_LAYER = 1 << 2;
+
+        public bool isColliding;
 
         private float water_level = 0;
         private float WATER_LEVEL { get { return water_level / PIXELS_PER_UNIT; } set { water_level = value; } }
@@ -35,49 +38,29 @@ namespace TestMod
             On.ProcessManager.PostSwitchMainProcess += ProcessManager_PostSwitchMainProcess;
             On.ArenaSitting.SessionEnded += ArenaSitting_SessionEnded;
             On.ArenaSitting.ArenaPlayer.Reset += ArenaPlayer_Reset;
-            On.AbstractPhysicalObject.Realize += AbstractPhysicalObject_Realize;
-            On.AbstractPhysicalObject.Abstractize += AbstractPhysicalObject_Abstractize;
-            On.AbstractCreature.Realize += AbstractCreature_Realize;
-            On.AbstractCreature.Abstractize += AbstractCreature_Abstractize;
+            On.PhysicalObject.IsTileSolid += PhysicalObject_IsTileSolid1;
             
             // Fix your typos rain world!!!!!!! wraghhhhhh!!!!! (wrath of 1000 slugcats)
             //On.Room.GetTile_int_int += Room_GetTile_int_int;
             //On.PhysicalObject.IsTileSolid += PhysicalObject_IsTileSolid;
         }
 
-        private static void AbstractCreature_Abstractize(On.AbstractCreature.orig_Abstractize orig, AbstractCreature self, WorldCoordinate coord)
+        private static bool PhysicalObject_IsTileSolid1(On.PhysicalObject.orig_IsTileSolid orig, PhysicalObject self, int bChunk, int relativeX, int relativeY)
         {
-            if (RoomPhysics.Get(self.realizedObject.room).TryGetObject(self.realizedObject, out var obj))
+            if (orig(self, bChunk, relativeX, relativeY)) return true;
+            if (self.room.ReadyForPlayer)
             {
-                // Need to change to destroy UnityObject
-                UnityEngine.Object.Destroy(obj);
+                foreach (KeyValuePair<UpdatableAndDeletable, GameObject> item in RoomPhysics.Get(self.room)._linkedObjects)
+                {
+                    if (RoomPhysics.Get(self.room).PointInRb(item.Value, self.bodyChunks[bChunk].pos + new Vector2(relativeX * 20, relativeY * 20)))
+                    {
+
+                        return true;
+
+                    }
+                }
             }
-            orig(self, coord);
-        }
-
-        private static void AbstractCreature_Realize(On.AbstractCreature.orig_Realize orig, AbstractCreature self)
-        {
-            orig(self);
-            UnityObject obj = new UnityObject(RoomPhysics.Get(self.realizedObject.room), RigidbodyType2D.Dynamic, 0f, 0.5f, self);
-            SceneManager.MoveGameObjectToScene(obj.obj, RoomPhysics.Get(self.realizedObject.room)._scene);
-        }
-
-        private static void AbstractPhysicalObject_Abstractize(On.AbstractPhysicalObject.orig_Abstractize orig, AbstractPhysicalObject self, WorldCoordinate coord)
-        {
-            if (RoomPhysics.Get(self.realizedObject.room).TryGetObject(self.realizedObject, out var obj))
-            {
-                // Need to change to destroy UnityObject
-                UnityEngine.Object.Destroy(obj);
-            }
-            orig(self, coord);
-        }
-
-        private static void AbstractPhysicalObject_Realize(On.AbstractPhysicalObject.orig_Realize orig, AbstractPhysicalObject self)
-        {
-            orig(self);
-            // Null error here? find out whar...
-            UnityObject obj = new UnityObject(RoomPhysics.Get(self.realizedObject.room), RigidbodyType2D.Dynamic, 0f, 0.5f, self);
-            SceneManager.MoveGameObjectToScene(obj.obj, RoomPhysics.Get(self.realizedObject.room)._scene);
+            return false;
         }
 
         private static void ArenaPlayer_Reset(On.ArenaSitting.ArenaPlayer.orig_Reset orig, ArenaSitting.ArenaPlayer self)
@@ -388,6 +371,7 @@ namespace TestMod
         // Collision between bodyChunks and RigidBodies
         private void CheckBodyChunkAgainstrb()
         {
+            isColliding = false;
             // Foreach error, check exceptionLog
             foreach (var obj in _room.updateList.ToList())
             {
@@ -429,11 +413,7 @@ namespace TestMod
                                     // Use Cast() and the IsChunkTouchingGameObject() methods to check for collision.
                                     foreach (PolygonCollider2D polygon in obje.GetComponents<PolygonCollider2D>())
                                     {
-                                        Vector2 temp = CastGameObject(polygon, b);
-                                        if (temp != b.pos)
-                                           {
-                                            b.pos = temp;
-                                           }
+                                        CastGameObject(polygon, b);
                                     }
                                 }
                                 }                           
@@ -444,7 +424,7 @@ namespace TestMod
         }
         public Dictionary<UpdatableAndDeletable, GameObject> ObjList { get { return this._linkedObjects; } }
 
-        public Vector2 CastGameObject( PolygonCollider2D polygon, BodyChunk b )
+        public void CastGameObject( PolygonCollider2D polygon, BodyChunk b )
         {
             Vector2 origPos = b.pos;
             Vector2 UniPos = b.pos / PIXELS_PER_UNIT;
@@ -454,29 +434,38 @@ namespace TestMod
 
             if (collider != null && collider is PolygonCollider2D && collider as PolygonCollider2D == polygon)
             {
-                // Need to now correct velocity properly
-                // Replace with Unity CircleCast https://docs.unity3d.com/ScriptReference/PhysicsScene2D.CircleCast.html
-                //Vector2 point = _physics.CircleCast((UniPos), b.rad / PIXELS_PER_UNIT, UniVel.normalized, Vector2.Distance(UniPos - UniVel, UniPos) + 20f).point * PIXELS_PER_UNIT;
-                Vector2 point = _physics.Raycast((UniPos - UniVel), UniVel.normalized, Vector2.Distance(UniPos - UniVel, UniPos) + 20f).point * PIXELS_PER_UNIT;
-                if (Mathf.Abs(origPos.y - point.y) > 0.01f)
+                RaycastHit2D raycast = _physics.CircleCast((UniPos), b.rad / PIXELS_PER_UNIT, UniVel.normalized, Vector2.Distance(UniPos + UniVel, UniPos));
+                if (raycast.collider != null)
                 {
+                    isColliding = true;
+                    //Debug.Log("Collision! at " + raycast.centroid * PIXELS_PER_UNIT);
+                    //Debug.Log("Point: " + raycast.point * PIXELS_PER_UNIT);
+                    Vector2 point = raycast.point * PIXELS_PER_UNIT;
+
+                    b.pos = point + (-UniVel.normalized * b.rad);
                     int dir = Math.Sign(origPos.y - point.y);
-                    if (Mathf.Abs(b.vel.y) >= b.owner.impactTreshhold) b.owner.TerrainImpact(b.index, new IntVector2(0, dir), Mathf.Abs(b.vel.y), b.contactPoint.y != dir);
-                    if (b.contactPoint.y == 0) b.contactPoint.y = dir;
-                    b.vel.y = Mathf.Abs(b.vel.y) * Mathf.Sign(b.pos.y - collider.transform.position.y) * b.owner.bounce;
+                    if (Mathf.Abs(b.vel.y) >= b.owner.impactTreshhold)
+                    {
+                        b.owner.TerrainImpact(b.index, new IntVector2(0, dir), Mathf.Abs(b.vel.y), b.contactPoint.y != dir);
+                    }
+                    if (b.contactPoint.y == 0)
+                    {
+                        b.contactPoint.y = dir;
+                    }
+                    b.vel.y = -Mathf.Abs(b.vel.y) * b.owner.bounce;
+                    if (Mathf.Abs(b.vel.y) < 1f + 9f * (1f - b.owner.bounce))
+                    { 
+                        b.vel.y = 0f; 
+                    }
+
                     b.vel.x *= Mathf.Clamp01(b.owner.surfaceFriction * 2f);
                     if (b.index == 1 && b.owner is Player ply)
                     {
                         ply.feetStuckPos = ply.bodyChunks[1].pos;
                     }
                 }
-                if (point != Vector2.zero ) 
-                {
-                    return point;
-                }
             }
 
-            return origPos;
         }
         public bool IsPointInRb(GameObject obj, Vector2 p)
         {

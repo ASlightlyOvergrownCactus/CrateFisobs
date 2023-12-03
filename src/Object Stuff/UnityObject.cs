@@ -4,22 +4,26 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using TestMod.Object_Stuff;
 using UnityEngine;
+using UnityEngine.PlayerLoop;
 using UnityEngine.SceneManagement;
 
 namespace TestMod
 {
-    internal class UnityObject : MonoBehaviour
+    internal class UnityObject
     {
+        public Rigidbody2D rb2d;
+        public CircleCollider2D circle;
         public GameObject obj;
         public bool isUniObject;
-        public Rigidbody2D rb2d;
         public UpdatableAndDeletable owner;
         public AbstractPhysicalObject physObj;
-        public CircleCollider2D[] circles;
+        
         // For Unity Objects
         public UnityObject(RoomPhysics phys, UnityEngine.Vector2[] shape, RigidbodyType2D type, float drag, float gravityScale, UpdatableAndDeletable owner) 
         {
+            Debug.Log("beginning unity object creation");
             obj = new GameObject();
             rb2d = obj.AddComponent<Rigidbody2D>();
             rb2d.bodyType = type;
@@ -43,7 +47,6 @@ namespace TestMod
             catch
             {
                 UnityEngine.Object.Destroy(obj);
-                Destroy(this);
                 throw;
             }
 
@@ -53,21 +56,27 @@ namespace TestMod
         // For Rainworld Objects
         public UnityObject(RoomPhysics phys, RigidbodyType2D type, float drag, float gravityScale, AbstractPhysicalObject physObj)
         {
+            Debug.Log("beginning rw object creation");
             obj = new GameObject();
+
             rb2d = obj.AddComponent<Rigidbody2D>();
             rb2d.bodyType = type;
             rb2d.drag = drag;
             rb2d.gravityScale = gravityScale;
             rb2d.WakeUp();
+            this.physObj = physObj;
+            owner = physObj.realizedObject;
 
             // Circles for each bodyChunk
-            circles = new CircleCollider2D[physObj.realizedObject.bodyChunks.Length];
             for (int i = 0; i < physObj.realizedObject.bodyChunks.Length; i++)
             {
-                circles[i] = obj.AddComponent<CircleCollider2D>();
-                circles[i].radius = physObj.realizedObject.bodyChunks[i].rad / 20f;
+                circle = obj.AddComponent<CircleCollider2D>();
+                circle.radius = physObj.realizedObject.bodyChunks[i].rad / RoomPhysics.PIXELS_PER_UNIT;
+                Debug.Log("Collider added");
             }
-            this.physObj = physObj;
+
+            RWMono rwMono = obj.AddComponent<RWMono>();
+            rwMono.SetPhysObj(physObj);
 
             obj.layer = 1 << 3;
 
@@ -78,37 +87,11 @@ namespace TestMod
             catch
             {
                 UnityEngine.Object.Destroy(obj);
-                Destroy(this);
                 throw;
             }
+            
 
             isUniObject = false;
         }
-
-
-        public void Destroy(UnityObject obj)
-        {
-            MonoBehaviour.Destroy(obj);
-        }
-
-        public void Update()
-        {
-            if (isUniObject)
-            {
-
-            }
-
-            else
-            {
-                rb2d.position.Set(physObj.realizedObject.firstChunk.pos.y / RoomPhysics.PIXELS_PER_UNIT, physObj.realizedObject.firstChunk.pos.y / RoomPhysics.PIXELS_PER_UNIT);
-                for (int i = 0; i < circles.Length; i++)
-                {
-                    UnityEngine.Vector2 offset = rb2d.position - (physObj.realizedObject.bodyChunks[i].pos / RoomPhysics.PIXELS_PER_UNIT);
-                    circles[i].offset = offset;
-                }
-            }
-        }
-
-
     }
 }
