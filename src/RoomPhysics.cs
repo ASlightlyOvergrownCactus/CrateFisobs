@@ -39,10 +39,17 @@ namespace TestMod
             On.ArenaSitting.SessionEnded += ArenaSitting_SessionEnded;
             On.ArenaSitting.ArenaPlayer.Reset += ArenaPlayer_Reset;
             On.PhysicalObject.IsTileSolid += PhysicalObject_IsTileSolid1;
+            On.Player.MovementUpdate += Player_MovementUpdate;
             
             // Fix your typos rain world!!!!!!! wraghhhhhh!!!!! (wrath of 1000 slugcats)
             //On.Room.GetTile_int_int += Room_GetTile_int_int;
             //On.PhysicalObject.IsTileSolid += PhysicalObject_IsTileSolid;
+        }
+
+        private static void Player_MovementUpdate(On.Player.orig_MovementUpdate orig, Player self, bool eu)
+        {
+            orig(self, eu);
+            Debug.Log(StackTraceUtility.ExtractStackTrace());
         }
 
         private static bool PhysicalObject_IsTileSolid1(On.PhysicalObject.orig_IsTileSolid orig, PhysicalObject self, int bChunk, int relativeX, int relativeY)
@@ -52,7 +59,7 @@ namespace TestMod
             {
                 foreach (KeyValuePair<UpdatableAndDeletable, GameObject> item in RoomPhysics.Get(self.room)._linkedObjects)
                 {
-                    if (RoomPhysics.Get(self.room).PointInRb(item.Value, self.bodyChunks[bChunk].pos + new Vector2(relativeX * 20, relativeY * 20)))
+                    if (RoomPhysics.Get(self.room).PointInRb(item.Value, self.bodyChunks[bChunk].pos + new Vector2(relativeX * 20, relativeY * 20)) || RoomPhysics.Get(self.room).isColliding)
                     {
 
                         return true;
@@ -371,7 +378,6 @@ namespace TestMod
         // Collision between bodyChunks and RigidBodies
         private void CheckBodyChunkAgainstrb()
         {
-            isColliding = false;
             // Foreach error, check exceptionLog
             foreach (var obj in _room.updateList.ToList())
             {
@@ -435,36 +441,45 @@ namespace TestMod
             if (collider != null && collider is PolygonCollider2D && collider as PolygonCollider2D == polygon)
             {
                 RaycastHit2D raycast = _physics.CircleCast((UniPos), b.rad / PIXELS_PER_UNIT, UniVel.normalized, Vector2.Distance(UniPos + UniVel, UniPos));
+
                 if (raycast.collider != null)
                 {
                     isColliding = true;
-                    //Debug.Log("Collision! at " + raycast.centroid * PIXELS_PER_UNIT);
-                    //Debug.Log("Point: " + raycast.point * PIXELS_PER_UNIT);
                     Vector2 point = raycast.point * PIXELS_PER_UNIT;
+                    Vector2 newPos = point + (-UniVel.normalized * b.rad);
+                    b.pos = newPos;
+                    if (Mathf.Abs(origPos.y - newPos.y) > 0.01f)
+                    {
+                        int dir = -Math.Sign(origPos.y - newPos.y);
+                        if (Mathf.Abs(b.vel.y) >= b.owner.impactTreshhold) b.owner.TerrainImpact(b.index, new IntVector2(0, dir), Mathf.Abs(b.vel.y), b.contactPoint.y != dir);
+                        if (b.contactPoint.y == 0) b.contactPoint.y = dir;
+                        b.vel.y = Mathf.Abs(b.vel.y) * Mathf.Sign(newPos.y - (raycast.rigidbody.position.y * PIXELS_PER_UNIT)) * b.owner.bounce;
+                        b.vel.x *= Mathf.Clamp01(b.owner.surfaceFriction * 2f);
+                        if (b.index == 1 && b.owner is Player ply)
+                        {
+                            ply.feetStuckPos = ply.bodyChunks[1].pos;
+                            Debug.Log(StackTraceUtility.ExtractStackTrace());
+                        }
+                    }
 
-                    b.pos = point + (-UniVel.normalized * b.rad);
-                    int dir = Math.Sign(origPos.y - point.y);
-                    if (Mathf.Abs(b.vel.y) >= b.owner.impactTreshhold)
+                    if (Mathf.Abs(origPos.x - newPos.x) > 0.01f)
                     {
-                        b.owner.TerrainImpact(b.index, new IntVector2(0, dir), Mathf.Abs(b.vel.y), b.contactPoint.y != dir);
-                    }
-                    if (b.contactPoint.y == 0)
-                    {
-                        b.contactPoint.y = dir;
-                    }
-                    b.vel.y = -Mathf.Abs(b.vel.y) * b.owner.bounce;
-                    if (Mathf.Abs(b.vel.y) < 1f + 9f * (1f - b.owner.bounce))
-                    { 
-                        b.vel.y = 0f; 
-                    }
-
-                    b.vel.x *= Mathf.Clamp01(b.owner.surfaceFriction * 2f);
-                    if (b.index == 1 && b.owner is Player ply)
-                    {
-                        ply.feetStuckPos = ply.bodyChunks[1].pos;
+                        int dir = Math.Sign(origPos.x - newPos.x);
+                        if (Mathf.Abs(b.vel.x) >= b.owner.impactTreshhold) b.owner.TerrainImpact(b.index, new IntVector2(dir, 0), Mathf.Abs(b.vel.x), b.contactPoint.x != dir);
+                        if (b.contactPoint.x == 0) b.contactPoint.x = dir;
+                        b.vel.x = Mathf.Abs(b.vel.x) * Mathf.Sign(newPos.x - (raycast.rigidbody.position.x * PIXELS_PER_UNIT)) * b.owner.bounce;
+                        b.vel.y *= Mathf.Clamp01(b.owner.surfaceFriction * 2f);
                     }
                 }
+
             }
+
+            else
+            {
+                isColliding = false;
+            }
+            
+
 
         }
         public bool IsPointInRb(GameObject obj, Vector2 p)

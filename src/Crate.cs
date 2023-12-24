@@ -25,6 +25,13 @@ namespace TestMod
             On.Player.Update += Player_Update;
             On.Player.GrabUpdate += Player_GrabUpdate;
             On.Player.ReleaseObject += Player_ReleaseObject;
+            On.RainWorld.OnModsInit += RainWorld_OnModsInit;
+        }
+
+        private static void RainWorld_OnModsInit(On.RainWorld.orig_OnModsInit orig, RainWorld self)
+        {
+            orig(self);
+
         }
 
 
@@ -168,6 +175,7 @@ namespace TestMod
 
             rotation = 0f;
             lastRotation = rotation;
+
         }
 
         // Grabs object for player with the grabber chunk
