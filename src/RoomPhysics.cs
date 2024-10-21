@@ -1,11 +1,11 @@
-﻿using Rewired.UI.ControlMapper;
-using RWCustom;
+﻿using RWCustom;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -48,7 +48,7 @@ namespace TestMod
 
         private static void Player_MovementUpdate(On.Player.orig_MovementUpdate orig, Player self, bool eu)
         {
-            orig(self, eu);
+            //orig(self, eu);
             Debug.Log(StackTraceUtility.ExtractStackTrace());
         }
 
@@ -363,7 +363,6 @@ namespace TestMod
 
         private void WaterFloatrb()
         {
-
             foreach (var item in _linkedObjects.ToList())
             {
                 if (item.Value.GetComponent<Rigidbody2D>().position.y < WATER_LEVEL)
@@ -419,7 +418,7 @@ namespace TestMod
                                     // Use Cast() and the IsChunkTouchingGameObject() methods to check for collision.
                                     foreach (PolygonCollider2D polygon in obje.GetComponents<PolygonCollider2D>())
                                     {
-                                        CastGameObject(polygon, b);
+                                        CastGameObject(polygon, b, hitPoint[0]);
                                     }
                                 }
                                 }                           
@@ -430,7 +429,7 @@ namespace TestMod
         }
         public Dictionary<UpdatableAndDeletable, GameObject> ObjList { get { return this._linkedObjects; } }
 
-        public void CastGameObject( PolygonCollider2D polygon, BodyChunk b )
+        public void CastGameObject( PolygonCollider2D polygon, BodyChunk b, Vector2 edgePoint)
         {
             Vector2 origPos = b.pos;
             Vector2 UniPos = b.pos / PIXELS_PER_UNIT;
@@ -441,34 +440,24 @@ namespace TestMod
             if (collider != null && collider is PolygonCollider2D && collider as PolygonCollider2D == polygon)
             {
                 RaycastHit2D raycast = _physics.CircleCast((UniPos), b.rad / PIXELS_PER_UNIT, UniVel.normalized, Vector2.Distance(UniPos + UniVel, UniPos));
-
+                // Runs when there is a projected collision
                 if (raycast.collider != null)
                 {
                     isColliding = true;
                     Vector2 point = raycast.point * PIXELS_PER_UNIT;
-                    Vector2 newPos = point + (-UniVel.normalized * b.rad);
-                    b.pos = newPos;
-                    if (Mathf.Abs(origPos.y - newPos.y) > 0.01f)
+                    if (Vector2.Distance(polygon.ClosestPoint(UniPos), UniPos) < 0.05f)
                     {
-                        int dir = -Math.Sign(origPos.y - newPos.y);
-                        if (Mathf.Abs(b.vel.y) >= b.owner.impactTreshhold) b.owner.TerrainImpact(b.index, new IntVector2(0, dir), Mathf.Abs(b.vel.y), b.contactPoint.y != dir);
-                        if (b.contactPoint.y == 0) b.contactPoint.y = dir;
-                        b.vel.y = Mathf.Abs(b.vel.y) * Mathf.Sign(newPos.y - (raycast.rigidbody.position.y * PIXELS_PER_UNIT)) * b.owner.bounce;
-                        b.vel.x *= Mathf.Clamp01(b.owner.surfaceFriction * 2f);
-                        if (b.index == 1 && b.owner is Player ply)
-                        {
-                            ply.feetStuckPos = ply.bodyChunks[1].pos;
-                            Debug.Log(StackTraceUtility.ExtractStackTrace());
-                        }
+                        Vector2 diff = edgePoint - origPos;
+                        // rotate vel to be perpendicular to the normal
+                        Vector2 temp = b.vel;
+                        float delta = -Vector2.SignedAngle(b.vel, raycast.normal);
+                        b.vel = diff + rotate(b.vel, delta * Mathf.Deg2Rad);
+                        UnityEngine.Debug.Log("Inside collider!");
+                        UnityEngine.Debug.Log("Raycast Normal direction: " + raycast.normal + " || Normalized Vel: " + temp.normalized + " || Perpendicular: " + rotate(b.vel, delta * Mathf.Deg2Rad));
                     }
-
-                    if (Mathf.Abs(origPos.x - newPos.x) > 0.01f)
+                    else //(Vector2.Distance(origPos, newPos) > 0.01f)
                     {
-                        int dir = Math.Sign(origPos.x - newPos.x);
-                        if (Mathf.Abs(b.vel.x) >= b.owner.impactTreshhold) b.owner.TerrainImpact(b.index, new IntVector2(dir, 0), Mathf.Abs(b.vel.x), b.contactPoint.x != dir);
-                        if (b.contactPoint.x == 0) b.contactPoint.x = dir;
-                        b.vel.x = Mathf.Abs(b.vel.x) * Mathf.Sign(newPos.x - (raycast.rigidbody.position.x * PIXELS_PER_UNIT)) * b.owner.bounce;
-                        b.vel.y *= Mathf.Clamp01(b.owner.surfaceFriction * 2f);
+                        b.vel = Vector2.Reflect(b.vel, raycast.normal) * b.owner.bounce;
                     }
                 }
 
@@ -481,6 +470,13 @@ namespace TestMod
             
 
 
+        }
+        // In radians
+        public static Vector2 rotate(Vector2 v, float delta) {
+            return new Vector2(
+                v.x * Mathf.Cos(delta) - v.y * Mathf.Sin(delta),
+                v.x * Mathf.Sin(delta) + v.y * Mathf.Cos(delta)
+            );
         }
         public bool IsPointInRb(GameObject obj, Vector2 p)
         {
