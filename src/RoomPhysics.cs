@@ -55,18 +55,18 @@ namespace TestMod
         private static bool PhysicalObject_IsTileSolid1(On.PhysicalObject.orig_IsTileSolid orig, PhysicalObject self, int bChunk, int relativeX, int relativeY)
         {
             if (orig(self, bChunk, relativeX, relativeY)) return true;
+
             if (self.room.ReadyForPlayer)
             {
                 foreach (KeyValuePair<UpdatableAndDeletable, GameObject> item in RoomPhysics.Get(self.room)._linkedObjects)
                 {
                     if (RoomPhysics.Get(self.room).PointInRb(item.Value, self.bodyChunks[bChunk].pos + new Vector2(relativeX * 20, relativeY * 20)) || RoomPhysics.Get(self.room).isColliding)
                     {
-
                         return true;
-
                     }
                 }
             }
+
             return false;
         }
 
@@ -107,12 +107,12 @@ namespace TestMod
             }
 
             orig(self, ID);
-
         }
 
         private static bool PhysicalObject_IsTileSolid(On.PhysicalObject.orig_IsTileSolid orig, PhysicalObject self, int bChunk, int relativeX, int relativeY)
         {
             if (orig(self, bChunk, relativeX, relativeY)) return true;
+
             if (self.room.ReadyForPlayer)
             {
                 foreach (KeyValuePair<UpdatableAndDeletable, GameObject> item in RoomPhysics.Get(self.room)._linkedObjects)
@@ -130,7 +130,6 @@ namespace TestMod
 
         public static Room.Tile Room_GetTile_int_int(On.Room.orig_GetTile_int_int orig, Room self, int x, int y)
         {
-
             if (self.ReadyForPlayer)
             {
                 var obj = RoomPhysics.Get(self);
@@ -148,8 +147,6 @@ namespace TestMod
 
         private static void Room_Update(On.Room.orig_Update orig, Room self)
         {
-
-
             if (_systems.TryGetValue(self, out var system))
             {
                 system.Update();
@@ -160,9 +157,6 @@ namespace TestMod
             {
                 orig(self);
             }
-
-
-
         }
 
         private static void RainWorldGame_ShutDownProcess(On.RainWorldGame.orig_ShutDownProcess orig, RainWorldGame self)
@@ -306,10 +300,6 @@ namespace TestMod
                             col.offset = new Vector2(x, y) * 20f / PIXELS_PER_UNIT + Vector2.one * 10 / PIXELS_PER_UNIT;
                             col.usedByComposite = true;
                         }
-
-
-
-
                     }
                 }
             }
@@ -326,8 +316,6 @@ namespace TestMod
             {
                 UnityEngine.Object.Destroy(col);
             }
-
-
         }
 
         private void Update()
@@ -348,8 +336,6 @@ namespace TestMod
             _physics.Simulate(1f / 40f);
             Physics2D.gravity = oldGrav;
             #endregion
-
-
         }
 
         // Called from Room_Update, Used for collision to bodyChunks/floating water
@@ -357,9 +343,7 @@ namespace TestMod
         {
             WaterFloatrb();
             CheckBodyChunkAgainstrb();
-
         }
-
 
         private void WaterFloatrb()
         {
@@ -384,10 +368,8 @@ namespace TestMod
                 {
                     foreach (BodyChunk b in Pobj.bodyChunks.ToList())
                     {
-
                         foreach (var item in _linkedObjects.ToList())
                         {
-
                             ContactFilter2D CF = new ContactFilter2D();
                             CF.useLayerMask = true;
                             CF.layerMask = ~(1 << 2);
@@ -395,15 +377,13 @@ namespace TestMod
                             //_physics.OverlapCircle((b.pos) / PIXELS_PER_UNIT, (b.rad + b.TerrainRad) / PIXELS_PER_UNIT, CF, result);
 
 
-                                if (item.Key is Crate)
+                            if (item.Key is Crate)
+                            {
+                                Vector2 oldPos = b.pos;
+                                Crate c = item.Key as Crate;
+                                var phys = RoomPhysics.Get(c.room);
+                                if (phys.TryGetObject(c, out var obje))
                                 {
-                                    Vector2 oldPos = b.pos;
-                                    Crate c = item.Key as Crate;
-                                    var phys = RoomPhysics.Get(c.room);
-                                    if (phys.TryGetObject(c, out var obje))
-                                    {
-                                        
-
                                     Vector2[] hitPoint = ClosestPointToRb(obje.gameObject, b.pos, b.vel, b.rad, b.TerrainRad);
 
                                     (item.Key as Crate).debugSpr.NumberOfPoint[0] = hitPoint[0];
@@ -421,7 +401,7 @@ namespace TestMod
                                         CastGameObject(polygon, b, hitPoint[0]);
                                     }
                                 }
-                                }                           
+                            }                           
                         }
                     }
                 }
@@ -467,9 +447,6 @@ namespace TestMod
             {
                 isColliding = false;
             }
-            
-
-
         }
         // In radians
         public static Vector2 rotate(Vector2 v, float delta) {
@@ -566,3 +543,4 @@ namespace TestMod
         }
     }
 }
+// cactus im going to kill you

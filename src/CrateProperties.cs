@@ -26,6 +26,5 @@ namespace TestMod
                 grabability = Player.ObjectGrabability.Drag;
             }
         }
-
     }
 }

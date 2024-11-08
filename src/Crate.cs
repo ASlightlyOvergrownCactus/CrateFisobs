@@ -153,8 +153,10 @@ namespace TestMod
             Abstr = abstr;
 
             bodyChunks = new BodyChunk[]
-                { new BodyChunk(this, 0, new Vector2(), 1f, 10f),
-                new BodyChunk(this, 0, Vector2.zero, 5f, 1f)};
+            { 
+                new BodyChunk(this, 0, new Vector2(), 1f, 10f),
+                new BodyChunk(this, 0, Vector2.zero, 5f, 1f)
+            };
 
             
             bodyChunkConnections = new BodyChunkConnection[0];
@@ -175,7 +177,6 @@ namespace TestMod
 
             rotation = 0f;
             lastRotation = rotation;
-
         }
 
         // Grabs object for player with the grabber chunk
@@ -185,10 +186,8 @@ namespace TestMod
             {
                 var phys = RoomPhysics.Get(room);
 
-
                 if (phys.TryGetObject(this, out var obj))
                 {
-                    
                     var rb2d = obj.GetComponent<Rigidbody2D>();
                     //Debug.Log("New grabber chunk position: " + bodyChunks[1].pos);
                     grabberPos = rb2d.ClosestPoint(player.bodyChunks[0].pos / RoomPhysics.PIXELS_PER_UNIT) * RoomPhysics.PIXELS_PER_UNIT;
@@ -200,10 +199,8 @@ namespace TestMod
                         player.SlugcatGrab(this, 0);
                     }
                 }
-
             }
         }
-        
 
         public override void Update(bool eu)
         {
@@ -323,7 +320,9 @@ namespace TestMod
             newContainer ??= rCam.ReturnFContainer("Items");
 
             foreach (FSprite fsprite in sLeaser.sprites)
+            {
                 newContainer.AddChild(fsprite);
+            }
         }
     }
 }

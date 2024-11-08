@@ -23,7 +23,9 @@ namespace TestMod
         {
             base.Realize();
             if (realizedObject == null)
+            {
                 realizedObject = new Crate(this);
+            }
         }
 
         public float hue;
