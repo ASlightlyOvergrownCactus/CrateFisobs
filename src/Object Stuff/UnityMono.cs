@@ -9,8 +9,6 @@ namespace TestMod.Object_Stuff
 {
     internal class UnityMono : MonoBehaviour
     {
-
-
         void Awake()
         {
 

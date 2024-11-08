@@ -89,7 +89,6 @@ namespace TestMod
                 UnityEngine.Object.Destroy(obj);
                 throw;
             }
-            
 
             isUniObject = false;
         }
